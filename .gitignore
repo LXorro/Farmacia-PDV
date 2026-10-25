@@ -1,0 +1,29 @@
+# --- Compilación (Qt / CMake) ---
+app/build/
+build/
+CMakeLists.txt.user*
+*.autosave
+.qtcreator/
+compile_commands.json
+
+# --- Demo distribuida: datos y archivos de ejecución de MariaDB ---
+# (se regeneran con db/distribuido/start.sh; los my.cnf sí se versionan)
+db/distribuido/*/data/
+db/distribuido/*/*.log
+db/distribuido/*/*.pid
+db/distribuido/*/*.sock
+
+# --- Base de datos de referencia del sistema anterior (Eleventa), sin uso en el entregable ---
+PDVDATA.FDB
+
+# --- Editores / sistema ---
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# --- Temporales ---
+*.tmp
+*.bak

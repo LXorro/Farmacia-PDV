@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>LoteDialog</class>
+ <widget class="QDialog" name="LoteDialog">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>400</width><height>320</height></rect>
+  </property>
+  <property name="windowTitle"><string>Lote</string></property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="labelProducto"><property name="text"><string>Producto:</string></property></widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="comboProducto"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelSucursal"><property name="text"><string>Sucursal:</string></property></widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="comboSucursal"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelNumeroLote"><property name="text"><string>Número de lote:</string></property></widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="lineNumeroLote"/>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelFechaCaducidad"><property name="text"><string>Fecha de caducidad:</string></property></widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QDateEdit" name="dateFechaCaducidad">
+       <property name="calendarPopup"><bool>true</bool></property>
+       <property name="date"><date><year>2027</year><month>1</month><day>1</day></date></property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="labelCantidad"><property name="text"><string>Cantidad recibida:</string></property></widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QSpinBox" name="spinCantidad">
+       <property name="minimum"><number>1</number></property>
+       <property name="maximum"><number>999999</number></property>
+       <property name="value"><number>1</number></property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="labelEstado"><property name="text"><string>Estado:</string></property></widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QComboBox" name="comboEstado">
+       <item><property name="text"><string>disponible</string></property></item>
+       <item><property name="text"><string>agotado</string></property></item>
+       <item><property name="text"><string>caducado</string></property></item>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation"><enum>Qt::Horizontal</enum></property>
+     <property name="standardButtons"><set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>LoteDialog</receiver>
+   <slot>reject()</slot>
+  </connection>
+ </connections>
+</ui>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>RegistroDialog</class>
+ <widget class="QDialog" name="RegistroDialog">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>400</width><height>300</height></rect>
+  </property>
+  <property name="windowTitle"><string>Registrar usuario</string></property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="labelAyuda">
+     <property name="wordWrap"><bool>true</bool></property>
+     <property name="text"><string>Cada cuenta corresponde a un empleado existente. El primer usuario que se registre en el sistema queda como administrador; los siguientes, como empleados.</string></property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="labelEmpleado"><property name="text"><string>Empleado:</string></property></widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="comboEmpleado"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelUsuario"><property name="text"><string>Nombre de usuario:</string></property></widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="lineUsuario"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelContrasena"><property name="text"><string>Contraseña:</string></property></widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="lineContrasena">
+       <property name="echoMode"><enum>QLineEdit::Password</enum></property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelConfirmar"><property name="text"><string>Confirmar contraseña:</string></property></widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QLineEdit" name="lineConfirmar">
+       <property name="echoMode"><enum>QLineEdit::Password</enum></property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation"><enum>Qt::Horizontal</enum></property>
+     <property name="standardButtons"><set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>RegistroDialog</receiver>
+   <slot>reject()</slot>
+  </connection>
+ </connections>
+</ui>

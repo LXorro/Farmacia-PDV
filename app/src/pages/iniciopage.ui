@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>InicioPage</class>
+ <widget class="QWidget" name="InicioPage">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>760</width><height>520</height></rect>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="labelLogo">
+     <property name="alignment"><set>Qt::AlignHCenter</set></property>
+     <property name="text"><string/></property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="encabezadoLayout">
+     <item>
+      <layout class="QVBoxLayout" name="saludoLayout">
+       <item>
+        <widget class="QLabel" name="labelBienvenida">
+         <property name="styleSheet"><string>font-size: 24px; font-weight: bold;</string></property>
+         <property name="text"><string>Bienvenido/a</string></property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelSubtitulo">
+         <property name="styleSheet"><string>color: #666;</string></property>
+         <property name="text"><string/></property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="spacerSaludo"><property name="orientation"><enum>Qt::Vertical</enum></property></spacer>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="statsLayout">
+     <item>
+      <widget class="QFrame" name="frameVentasHoy">
+       <property name="frameShape"><enum>QFrame::StyledPanel</enum></property>
+       <layout class="QVBoxLayout" name="ventasHoyLayout">
+        <item>
+         <widget class="QLabel" name="labelVentasHoyTitulo">
+          <property name="text"><string>Ventas de hoy</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelVentasHoy">
+          <property name="styleSheet"><string>font-size: 24px; font-weight: bold;</string></property>
+          <property name="text"><string>$0.00</string></property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="framePendientes">
+       <property name="frameShape"><enum>QFrame::StyledPanel</enum></property>
+       <layout class="QVBoxLayout" name="pendientesLayout">
+        <item>
+         <widget class="QLabel" name="labelPendientesTitulo">
+          <property name="text"><string>Tickets con saldo pendiente</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelPendientes">
+          <property name="styleSheet"><string>font-size: 24px; font-weight: bold;</string></property>
+          <property name="text"><string>0</string></property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="frameCaducidad">
+       <property name="frameShape"><enum>QFrame::StyledPanel</enum></property>
+       <layout class="QVBoxLayout" name="caducidadLayout">
+        <item>
+         <widget class="QLabel" name="labelCaducidadTitulo">
+          <property name="text"><string>Lotes por caducar (30 días)</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelCaducidad">
+          <property name="styleSheet"><string>font-size: 24px; font-weight: bold;</string></property>
+          <property name="text"><string>0</string></property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelAccesos">
+     <property name="styleSheet"><string>font-weight: bold; margin-top: 8px;</string></property>
+     <property name="text"><string>Accesos rápidos</string></property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QGridLayout" name="gridAccesos">
+     <item row="0" column="0">
+      <widget class="QPushButton" name="btnPuntoVenta">
+       <property name="minimumHeight"><number>64</number></property>
+       <property name="text"><string>Punto de Venta</string></property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QPushButton" name="btnProductos">
+       <property name="minimumHeight"><number>64</number></property>
+       <property name="text"><string>Productos</string></property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QPushButton" name="btnClientes">
+       <property name="minimumHeight"><number>64</number></property>
+       <property name="text"><string>Clientes</string></property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QPushButton" name="btnTickets">
+       <property name="minimumHeight"><number>64</number></property>
+       <property name="text"><string>Tickets</string></property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QPushButton" name="btnInventario">
+       <property name="minimumHeight"><number>64</number></property>
+       <property name="text"><string>Inventario</string></property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QPushButton" name="btnCategorias">
+       <property name="minimumHeight"><number>64</number></property>
+       <property name="text"><string>Categorías</string></property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QPushButton" name="btnProveedores">
+       <property name="minimumHeight"><number>64</number></property>
+       <property name="text"><string>Proveedores</string></property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QPushButton" name="btnEmpleados">
+       <property name="minimumHeight"><number>64</number></property>
+       <property name="text"><string>Empleados</string></property>
+      </widget>
+     </item>
+     <item row="2" column="2">
+      <widget class="QPushButton" name="btnSucursales">
+       <property name="minimumHeight"><number>64</number></property>
+       <property name="text"><string>Sucursales</string></property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QPushButton" name="btnUsuarios">
+       <property name="minimumHeight"><number>64</number></property>
+       <property name="text"><string>Usuarios</string></property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <spacer name="spacerFinal">
+     <property name="orientation"><enum>Qt::Vertical</enum></property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

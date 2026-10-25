@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TicketsPage</class>
+ <widget class="QWidget" name="TicketsPage">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>760</width><height>520</height></rect>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="botonesLayout">
+     <item><widget class="QLabel" name="labelFecha"><property name="text"><string>Fecha:</string></property></widget></item>
+     <item>
+      <widget class="QDateEdit" name="dateFiltro">
+       <property name="calendarPopup"><bool>true</bool></property>
+      </widget>
+     </item>
+     <item><widget class="QPushButton" name="btnHoy"><property name="text"><string>Hoy</string></property></widget></item>
+     <item><widget class="QCheckBox" name="checkTodos"><property name="text"><string>Mostrar todos los días</string></property></widget></item>
+     <item><spacer name="spacer"><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+     <item><widget class="QPushButton" name="btnVerDetalle"><property name="text"><string>Ver detalle / cobrar / devolver</string></property></widget></item>
+     <item><widget class="QPushButton" name="btnRefrescar"><property name="text"><string>Refrescar</string></property></widget></item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation"><enum>Qt::Vertical</enum></property>
+     <widget class="QWidget" name="panelTickets">
+      <layout class="QVBoxLayout" name="panelTicketsLayout">
+       <property name="leftMargin"><number>0</number></property>
+       <property name="topMargin"><number>0</number></property>
+       <property name="rightMargin"><number>0</number></property>
+       <property name="bottomMargin"><number>0</number></property>
+       <item>
+        <widget class="QLabel" name="labelSeccionTickets">
+         <property name="styleSheet"><string>font-weight: bold;</string></property>
+         <property name="text"><string>Tickets</string></property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTableView" name="tableView"/>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="panelDevoluciones">
+      <layout class="QVBoxLayout" name="panelDevolucionesLayout">
+       <property name="leftMargin"><number>0</number></property>
+       <property name="topMargin"><number>0</number></property>
+       <property name="rightMargin"><number>0</number></property>
+       <property name="bottomMargin"><number>0</number></property>
+       <item>
+        <widget class="QLabel" name="labelSeccionDevoluciones">
+         <property name="styleSheet"><string>font-weight: bold;</string></property>
+         <property name="text"><string>Devoluciones</string></property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTableView" name="tableDevoluciones"/>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

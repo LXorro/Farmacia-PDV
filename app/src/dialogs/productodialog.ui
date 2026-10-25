@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ProductoDialog</class>
+ <widget class="QDialog" name="ProductoDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>420</width>
+    <height>420</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Producto</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="labelNombre">
+       <property name="text">
+        <string>Nombre:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="lineNombre"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelMarca">
+       <property name="text">
+        <string>Marca:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="lineMarca"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelDescripcion">
+       <property name="text">
+        <string>Descripción:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QTextEdit" name="textDescripcion">
+       <property name="maximumHeight">
+        <number>70</number>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelCodigoBarras">
+       <property name="text">
+        <string>Código de barras:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QLineEdit" name="lineCodigoBarras"/>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="labelCategoria">
+       <property name="text">
+        <string>Categoría:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QComboBox" name="comboCategoria"/>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="labelProveedor">
+       <property name="text">
+        <string>Proveedor:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QComboBox" name="comboProveedor"/>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="labelPrecioCompra">
+       <property name="text">
+        <string>Precio de compra:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QDoubleSpinBox" name="spinPrecioCompra">
+       <property name="maximum">
+        <double>999999.000000000</double>
+       </property>
+       <property name="decimals">
+        <number>2</number>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="labelPrecioVenta">
+       <property name="text">
+        <string>Precio de venta:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QDoubleSpinBox" name="spinPrecioVenta">
+       <property name="maximum">
+        <double>999999.000000000</double>
+       </property>
+       <property name="decimals">
+        <number>2</number>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="QCheckBox" name="checkRequiereReceta">
+       <property name="text">
+        <string>Requiere receta médica</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <widget class="QLabel" name="labelEstado">
+       <property name="text">
+        <string>Estado:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="1">
+      <widget class="QComboBox" name="comboEstado">
+       <item>
+        <property name="text">
+         <string>disponible</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>agotado</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>suspendido</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>caducado</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>ProductoDialog</receiver>
+   <slot>reject()</slot>
+  </connection>
+ </connections>
+</ui>

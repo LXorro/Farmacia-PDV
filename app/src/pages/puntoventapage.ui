@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PuntoVentaPage</class>
+ <widget class="QWidget" name="PuntoVentaPage">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>760</width>
+    <height>520</height>
+   </rect>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="cabeceraLayout">
+     <item>
+      <widget class="QLabel" name="labelSucursal">
+       <property name="text">
+        <string>Sucursal:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="comboSucursal"/>
+     </item>
+     <item>
+      <widget class="QLabel" name="labelEmpleado">
+       <property name="text">
+        <string>Empleado:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="comboEmpleado"/>
+     </item>
+     <item>
+      <widget class="QLabel" name="labelCliente">
+       <property name="text">
+        <string>Cliente:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="comboCliente"/>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="busquedaLayout">
+     <item>
+      <widget class="QLineEdit" name="lineBuscarProducto">
+       <property name="placeholderText">
+        <string>Código de barras o nombre del producto</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSpinBox" name="spinCantidad">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>9999</number>
+       </property>
+       <property name="value">
+        <number>1</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnAgregar">
+       <property name="text">
+        <string>Agregar al carrito</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="tableCarrito">
+     <column>
+      <property name="text">
+       <string>Producto</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Lote</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Cantidad</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Precio unitario</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Subtotal</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="piePagoLayout">
+     <item>
+      <widget class="QPushButton" name="btnQuitarLinea">
+       <property name="text">
+        <string>Quitar línea</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="spacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QLabel" name="labelModalidad">
+       <property name="text">
+        <string>Modalidad de pago:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="comboModalidadPago">
+       <item>
+        <property name="text">
+         <string>contado</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>diferido</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="labelMetodoPago">
+       <property name="text">
+        <string>Método de pago:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="comboMetodoPago">
+       <item>
+        <property name="text">
+         <string>efectivo</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>tarjeta</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>transferencia</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="totalLayout">
+     <item>
+      <spacer name="spacerTotal">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QLabel" name="labelTotalTitulo">
+       <property name="text">
+        <string>Total:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="labelTotal">
+       <property name="text">
+        <string>$0.00</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="accionesLayout">
+     <item>
+      <spacer name="spacerAcciones">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnCancelarVenta">
+       <property name="text">
+        <string>Cancelar venta</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnCobrar">
+       <property name="text">
+        <string>Cobrar</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

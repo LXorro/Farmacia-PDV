@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TicketDetalleDialog</class>
+ <widget class="QDialog" name="TicketDetalleDialog">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>620</width><height>540</height></rect>
+  </property>
+  <property name="windowTitle"><string>Detalle del ticket</string></property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="labelEncabezado">
+     <property name="styleSheet"><string>font-weight: bold;</string></property>
+     <property name="text"><string>Ticket</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelProductos">
+     <property name="text"><string>Productos:</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="tableVentas">
+     <column><property name="text"><string>Producto</string></property></column>
+     <column><property name="text"><string>Cantidad</string></property></column>
+     <column><property name="text"><string>Precio unitario</string></property></column>
+     <column><property name="text"><string>Subtotal</string></property></column>
+     <column><property name="text"><string>Devuelto</string></property></column>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelPagos">
+     <property name="text"><string>Pagos:</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="tablePagos">
+     <column><property name="text"><string>Fecha</string></property></column>
+     <column><property name="text"><string>Monto</string></property></column>
+     <column><property name="text"><string>Método</string></property></column>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="accionesLayout">
+     <item>
+      <widget class="QPushButton" name="btnRegistrarDevolucion">
+       <property name="text"><string>Registrar devolución de la línea seleccionada</string></property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="spacer"><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnRegistrarAbono">
+       <property name="text"><string>Registrar abono</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnCerrar">
+       <property name="text"><string>Cerrar</string></property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>btnCerrar</sender>
+   <signal>clicked()</signal>
+   <receiver>TicketDetalleDialog</receiver>
+   <slot>accept()</slot>
+  </connection>
+ </connections>
+</ui>

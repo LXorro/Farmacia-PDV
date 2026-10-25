@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DevolucionDialog</class>
+ <widget class="QDialog" name="DevolucionDialog">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>420</width><height>340</height></rect>
+  </property>
+  <property name="windowTitle"><string>Registrar devolución</string></property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="labelProductoTitulo"><property name="text"><string>Producto:</string></property></widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLabel" name="labelProducto"><property name="text"><string/></property></widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelEmpleado"><property name="text"><string>Empleado que atiende:</string></property></widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="comboEmpleado"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelCantidad"><property name="text"><string>Cantidad a devolver:</string></property></widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QSpinBox" name="spinCantidad">
+       <property name="minimum"><number>1</number></property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelEstadoProducto"><property name="text"><string>Condición del producto:</string></property></widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QComboBox" name="comboEstadoProducto">
+       <item><property name="text"><string>sellado</string></property></item>
+       <item><property name="text"><string>abierto</string></property></item>
+       <item><property name="text"><string>dañado</string></property></item>
+       <item><property name="text"><string>caducado</string></property></item>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QCheckBox" name="checkReintegrarStock">
+       <property name="text"><string>Reintegrar al inventario</string></property>
+       <property name="checked"><bool>true</bool></property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="labelTipoReembolso"><property name="text"><string>Tipo de reembolso:</string></property></widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QComboBox" name="comboTipoReembolso">
+       <item><property name="text"><string>efectivo</string></property></item>
+       <item><property name="text"><string>transferencia</string></property></item>
+       <item><property name="text"><string>saldo_a_favor</string></property></item>
+       <item><property name="text"><string>cambio</string></property></item>
+      </widget>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="labelMotivo"><property name="text"><string>Motivo:</string></property></widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QLineEdit" name="lineMotivo"/>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation"><enum>Qt::Horizontal</enum></property>
+     <property name="standardButtons"><set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>DevolucionDialog</receiver>
+   <slot>reject()</slot>
+  </connection>
+ </connections>
+</ui>

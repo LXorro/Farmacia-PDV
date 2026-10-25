@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ProveedorDialog</class>
+ <widget class="QDialog" name="ProveedorDialog">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>400</width><height>280</height></rect>
+  </property>
+  <property name="windowTitle"><string>Proveedor</string></property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="labelNombreEmpresa"><property name="text"><string>Nombre de la empresa:</string></property></widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="lineNombreEmpresa"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelTelefono"><property name="text"><string>Teléfono:</string></property></widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="lineTelefono"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelCorreo"><property name="text"><string>Correo:</string></property></widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="lineCorreo"/>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelDireccion"><property name="text"><string>Dirección:</string></property></widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QLineEdit" name="lineDireccion"/>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="labelEstado"><property name="text"><string>Estado:</string></property></widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QComboBox" name="comboEstado">
+       <item><property name="text"><string>activo</string></property></item>
+       <item><property name="text"><string>inactivo</string></property></item>
+       <item><property name="text"><string>suspendido</string></property></item>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation"><enum>Qt::Horizontal</enum></property>
+     <property name="standardButtons"><set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>ProveedorDialog</receiver>
+   <slot>reject()</slot>
+  </connection>
+ </connections>
+</ui>
