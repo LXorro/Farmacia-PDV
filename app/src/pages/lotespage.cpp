@@ -3,6 +3,7 @@
 #include "../dialogs/lotedialog.h"
 #include "../database/sesionactual.h"
 #include "../util/iconos.h"
+#include "../util/tablas.h"
 
 #include <QHeaderView>
 #include <QMessageBox>
@@ -14,6 +15,7 @@ LotesPage::LotesPage(QWidget *parent) : QWidget(parent), ui(new Ui::LotesPage) {
     m_model = new QSqlQueryModel(this);
 
     ui->tableView->setModel(m_model);
+    Tablas::aplicar(ui->tableView, "No hay lotes en inventario.");
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);

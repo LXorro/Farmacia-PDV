@@ -1,6 +1,7 @@
 #include "categoriaspage.h"
 #include "ui_categoriaspage.h"
 #include "../util/iconos.h"
+#include "../util/tablas.h"
 #include "../dialogs/categoriadialog.h"
 #include "../database/sesionactual.h"
 
@@ -22,6 +23,7 @@ CategoriasPage::CategoriasPage(QWidget *parent) : QWidget(parent), ui(new Ui::Ca
     m_model->setHeaderData(m_model->fieldIndex("descripcion"), Qt::Horizontal, "Descripción");
 
     ui->tableView->setModel(m_model);
+    Tablas::aplicar(ui->tableView, "No hay categorías registradas.");
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);

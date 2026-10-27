@@ -5,6 +5,9 @@
         <file>logo-mark.svg</file>
         <file>fonts/SpaceMono-Regular.ttf</file>
         <file>fonts/SpaceMono-Bold.ttf</file>
+        <file>translations/qtbase_es.qm</file>
+        <file>ui/chevron-down.svg</file>
+        <file>ui/chevron-up.svg</file>
         <file>icons/arrow-back-up.svg</file>
         <file>icons/building-store.svg</file>
         <file>icons/cash-register.svg</file>

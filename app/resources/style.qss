@@ -140,6 +140,7 @@ QTableView, QTableWidget {
     gridline-color: #e7eaec;
     border: 1px solid #e1e5e8;
     border-radius: 6px;
+    outline: 0;
     selection-background-color: #0e8c73;
     selection-color: #ffffff;
 }
@@ -195,4 +196,41 @@ QComboBox QAbstractItemView {
     border: 1px solid #c7ccd1;
     selection-background-color: #0e8c73;
     selection-color: #ffffff;
+}
+
+/* ---------- Flechas de combos, fechas y spinboxes ---------- */
+QComboBox::drop-down, QDateEdit::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
+    width: 26px;
+    border: none;
+}
+QComboBox::down-arrow, QDateEdit::down-arrow {
+    image: url(:/ui/chevron-down.svg);
+    width: 14px;
+    height: 14px;
+}
+QSpinBox::up-button, QDoubleSpinBox::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    width: 22px;
+    border: none;
+    background: transparent;
+}
+QSpinBox::down-button, QDoubleSpinBox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    width: 22px;
+    border: none;
+    background: transparent;
+}
+QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
+    image: url(:/ui/chevron-up.svg);
+    width: 12px;
+    height: 12px;
+}
+QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
+    image: url(:/ui/chevron-down.svg);
+    width: 12px;
+    height: 12px;
 }

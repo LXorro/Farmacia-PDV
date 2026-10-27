@@ -1,6 +1,7 @@
 #include "sucursalespage.h"
 #include "ui_sucursalespage.h"
 #include "../util/iconos.h"
+#include "../util/tablas.h"
 #include "../dialogs/sucursaldialog.h"
 
 #include <QHeaderView>
@@ -23,6 +24,7 @@ SucursalesPage::SucursalesPage(QWidget *parent) : QWidget(parent), ui(new Ui::Su
     m_model->setHeaderData(m_model->fieldIndex("estado"), Qt::Horizontal, "Estado");
 
     ui->tableView->setModel(m_model);
+    Tablas::aplicar(ui->tableView, "No hay sucursales registradas.");
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);

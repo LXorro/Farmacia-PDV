@@ -9,6 +9,7 @@
 
 LoteDialog::LoteDialog(QWidget *parent) : QDialog(parent), ui(new Ui::LoteDialog) {
     ui->setupUi(this);
+    ui->dateFechaCaducidad->setDisplayFormat("dd/MM/yyyy");
     ui->dateFechaCaducidad->setDate(QDate::currentDate().addYears(1));
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &LoteDialog::guardar);
     cargarCombos();

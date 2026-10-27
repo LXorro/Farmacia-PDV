@@ -22,6 +22,8 @@ add_executable(FarmaciaApp
     src/util/passwordutil.h
     src/util/passwordutil.cpp
     src/util/iconos.h
+    src/util/tablas.h
+    src/util/tablas.cpp
     src/pages/iniciopage.h
     src/pages/iniciopage.cpp
     src/pages/iniciopage.ui

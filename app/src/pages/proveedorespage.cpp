@@ -1,6 +1,7 @@
 #include "proveedorespage.h"
 #include "ui_proveedorespage.h"
 #include "../util/iconos.h"
+#include "../util/tablas.h"
 #include "../dialogs/proveedordialog.h"
 
 #include <QHeaderView>
@@ -22,6 +23,7 @@ ProveedoresPage::ProveedoresPage(QWidget *parent) : QWidget(parent), ui(new Ui::
     m_model->setHeaderData(m_model->fieldIndex("estado"), Qt::Horizontal, "Estado");
 
     ui->tableView->setModel(m_model);
+    Tablas::aplicar(ui->tableView, "No hay proveedores registrados.");
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);

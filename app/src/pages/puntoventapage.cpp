@@ -2,6 +2,7 @@
 #include "ui_puntoventapage.h"
 #include "../database/sesionactual.h"
 #include "../util/iconos.h"
+#include "../util/tablas.h"
 
 #include <QHeaderView>
 #include <QMessageBox>
@@ -12,11 +13,18 @@
 
 PuntoVentaPage::PuntoVentaPage(QWidget *parent) : QWidget(parent), ui(new Ui::PuntoVentaPage) {
     ui->setupUi(this);
-    ui->tableCarrito->horizontalHeader()->setStretchLastSection(true);
+    {
+        // Producto se expande; el resto se ajusta al contenido (que no se corten los encabezados).
+        auto *h = ui->tableCarrito->horizontalHeader();
+        h->setStretchLastSection(false);
+        h->setSectionResizeMode(QHeaderView::ResizeToContents);
+        h->setSectionResizeMode(0, QHeaderView::Stretch);
+    }
     ui->tableCarrito->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableCarrito->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tableCarrito->setAlternatingRowColors(true);
     ui->tableCarrito->verticalHeader()->setVisible(false);
+    Tablas::aplicar(ui->tableCarrito, "El carrito está vacío.");
 
     connect(ui->comboSucursal, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &PuntoVentaPage::alCambiarSucursal);
     connect(ui->btnAgregar, &QPushButton::clicked, this, &PuntoVentaPage::agregarAlCarrito);

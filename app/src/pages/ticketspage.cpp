@@ -3,6 +3,7 @@
 #include "../dialogs/ticketdetalledialog.h"
 #include "../database/sesionactual.h"
 #include "../util/iconos.h"
+#include "../util/tablas.h"
 
 #include <QDate>
 #include <QHeaderView>
@@ -17,6 +18,7 @@ TicketsPage::TicketsPage(QWidget *parent) : QWidget(parent), ui(new Ui::TicketsP
     m_modelDevoluciones = new QSqlQueryModel(this);
 
     ui->tableView->setModel(m_model);
+    Tablas::aplicar(ui->tableView, "No hay tickets para esta fecha.");
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -25,6 +27,7 @@ TicketsPage::TicketsPage(QWidget *parent) : QWidget(parent), ui(new Ui::TicketsP
     ui->tableView->horizontalHeader()->setStretchLastSection(true);
 
     ui->tableDevoluciones->setModel(m_modelDevoluciones);
+    Tablas::aplicar(ui->tableDevoluciones, "No hay devoluciones para esta fecha.");
     ui->tableDevoluciones->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableDevoluciones->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableDevoluciones->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -32,6 +35,7 @@ TicketsPage::TicketsPage(QWidget *parent) : QWidget(parent), ui(new Ui::TicketsP
     ui->tableDevoluciones->verticalHeader()->setVisible(false);
     ui->tableDevoluciones->horizontalHeader()->setStretchLastSection(true);
 
+    ui->dateFiltro->setDisplayFormat("dd/MM/yyyy");
     ui->dateFiltro->setDate(QDate::currentDate());
 
     connect(ui->btnVerDetalle, &QPushButton::clicked, this, &TicketsPage::verDetalle);

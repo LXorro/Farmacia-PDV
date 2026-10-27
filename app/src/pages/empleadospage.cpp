@@ -1,6 +1,7 @@
 #include "empleadospage.h"
 #include "ui_empleadospage.h"
 #include "../util/iconos.h"
+#include "../util/tablas.h"
 #include "../dialogs/empleadodialog.h"
 
 #include <QHeaderView>
@@ -15,6 +16,7 @@ EmpleadosPage::EmpleadosPage(QWidget *parent) : QWidget(parent), ui(new Ui::Empl
     m_model = new QSqlQueryModel(this);
 
     ui->tableView->setModel(m_model);
+    Tablas::aplicar(ui->tableView, "No hay empleados registrados.");
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);

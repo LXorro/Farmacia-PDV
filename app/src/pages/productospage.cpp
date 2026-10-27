@@ -1,6 +1,7 @@
 #include "productospage.h"
 #include "ui_productospage.h"
 #include "../util/iconos.h"
+#include "../util/tablas.h"
 #include "../dialogs/productodialog.h"
 #include "../database/sesionactual.h"
 
@@ -16,6 +17,7 @@ ProductosPage::ProductosPage(QWidget *parent) : QWidget(parent), ui(new Ui::Prod
     m_model = new QSqlQueryModel(this);
 
     ui->tableView->setModel(m_model);
+    Tablas::aplicar(ui->tableView, "No hay productos registrados.");
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);

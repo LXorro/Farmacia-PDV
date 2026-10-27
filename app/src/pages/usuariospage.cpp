@@ -1,6 +1,7 @@
 #include "usuariospage.h"
 #include "ui_usuariospage.h"
 #include "../util/iconos.h"
+#include "../util/tablas.h"
 #include "../dialogs/usuariodialog.h"
 #include "../database/sesionactual.h"
 
@@ -16,6 +17,7 @@ UsuariosPage::UsuariosPage(QWidget *parent) : QWidget(parent), ui(new Ui::Usuari
     m_model = new QSqlQueryModel(this);
 
     ui->tableView->setModel(m_model);
+    Tablas::aplicar(ui->tableView, "No hay usuarios registrados.");
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);

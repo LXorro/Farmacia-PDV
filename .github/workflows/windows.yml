@@ -1,0 +1,75 @@
+name: Windows build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  QT_VERSION: 6.8.3
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          arch: win64_msvc2022_64
+          modules: ""
+          cache: true
+
+      # MariaDB Connector/C (cabeceras, .lib y .dll) desde vcpkg
+      - name: Instalar MariaDB Connector/C
+        run: |
+          "$VCPKG_INSTALLATION_ROOT/vcpkg.exe" install libmariadb:x64-windows
+
+      # Los binarios oficiales de Qt no traen qsqlmysql: se compila solo ese plugin
+      - name: Compilar plugin QMYSQL
+        run: |
+          git clone --depth 1 --branch "v${QT_VERSION}" --filter=blob:none --sparse \
+            https://code.qt.io/qt/qtbase.git qtbase-src
+          git -C qtbase-src sparse-checkout set src/plugins/sqldrivers cmake
+          VCPKG_INST="$VCPKG_INSTALLATION_ROOT/installed/x64-windows"
+          cmake -S qtbase-src/src/plugins/sqldrivers -B build-sqldrivers -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
+            -DCMAKE_INSTALL_PREFIX="$QT_ROOT_DIR" \
+            -DMySQL_INCLUDE_DIR="$VCPKG_INST/include/mariadb" \
+            -DMySQL_LIBRARY="$VCPKG_INST/lib/libmariadb.lib" \
+            -DFEATURE_sql_mysql=ON \
+            -DFEATURE_sql_psql=OFF -DFEATURE_sql_odbc=OFF -DFEATURE_sql_oci=OFF \
+            -DFEATURE_sql_ibase=OFF -DFEATURE_sql_db2=OFF -DFEATURE_sql_mimer=OFF
+          cmake --build build-sqldrivers
+          cmake --install build-sqldrivers
+          ls "$QT_ROOT_DIR/plugins/sqldrivers"
+
+      - name: Compilar la app
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          cmake -S app -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=%QT_ROOT_DIR%
+          cmake --build build
+
+      - name: Empaquetar
+        run: |
+          mkdir dist
+          cp build/FarmaciaApp.exe dist/
+          windeployqt --release --no-translations dist/FarmaciaApp.exe
+          mkdir -p dist/sqldrivers
+          cp "$QT_ROOT_DIR/plugins/sqldrivers/qsqlmysql.dll" dist/sqldrivers/
+          # libmariadb.dll y sus dependencias (openssl, zlib...)
+          cp "$VCPKG_INSTALLATION_ROOT"/installed/x64-windows/bin/*.dll dist/
+          ls -R dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FarmaciaApp-windows
+          path: dist

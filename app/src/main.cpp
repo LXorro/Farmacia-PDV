@@ -8,12 +8,18 @@
 #include <QFile>
 #include <QFontDatabase>
 #include <QIcon>
+#include <QTranslator>
 #include <QMessageBox>
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     QFontDatabase::addApplicationFont(":/fonts/SpaceMono-Regular.ttf");
     QFontDatabase::addApplicationFont(":/fonts/SpaceMono-Bold.ttf");
+    // Textos estándar de Qt (Guardar/Cancelar, Sí/No, calendario) en español.
+    QTranslator traductorQt;
+    if (traductorQt.load(":/translations/qtbase_es.qm"))
+        app.installTranslator(&traductorQt);
+
     QApplication::setStyle("Fusion");
     QApplication::setWindowIcon(Iconos::app());
 

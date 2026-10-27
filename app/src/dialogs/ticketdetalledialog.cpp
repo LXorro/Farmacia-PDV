@@ -2,6 +2,7 @@
 #include "ui_ticketdetalledialog.h"
 #include "devoluciondialog.h"
 #include "../util/iconos.h"
+#include "../util/tablas.h"
 
 #include <QDateTime>
 #include <QHeaderView>
@@ -12,15 +13,29 @@
 
 TicketDetalleDialog::TicketDetalleDialog(QWidget *parent) : QDialog(parent), ui(new Ui::TicketDetalleDialog) {
     ui->setupUi(this);
-    ui->tableVentas->horizontalHeader()->setStretchLastSection(true);
+    {
+        // Producto se expande; el resto se ajusta al contenido (que no se corten los encabezados).
+        auto *h = ui->tableVentas->horizontalHeader();
+        h->setStretchLastSection(false);
+        h->setSectionResizeMode(QHeaderView::ResizeToContents);
+        h->setSectionResizeMode(0, QHeaderView::Stretch);
+    }
     ui->tableVentas->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableVentas->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tableVentas->setAlternatingRowColors(true);
     ui->tableVentas->verticalHeader()->setVisible(false);
-    ui->tablePagos->horizontalHeader()->setStretchLastSection(true);
+    {
+        // Producto se expande; el resto se ajusta al contenido (que no se corten los encabezados).
+        auto *h = ui->tablePagos->horizontalHeader();
+        h->setStretchLastSection(false);
+        h->setSectionResizeMode(QHeaderView::ResizeToContents);
+        h->setSectionResizeMode(0, QHeaderView::Stretch);
+    }
     ui->tablePagos->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tablePagos->setAlternatingRowColors(true);
     ui->tablePagos->verticalHeader()->setVisible(false);
+    Tablas::aplicar(ui->tableVentas, "Este ticket no tiene líneas.");
+    Tablas::aplicar(ui->tablePagos, "Sin pagos registrados.");
 
     connect(ui->btnRegistrarAbono, &QPushButton::clicked, this, &TicketDetalleDialog::registrarAbono);
     connect(ui->btnRegistrarDevolucion, &QPushButton::clicked, this, &TicketDetalleDialog::registrarDevolucion);
@@ -51,7 +66,7 @@ void TicketDetalleDialog::cargarDatos() {
             QString("Ticket #%1 — %2 — %3 — Total: $%4 — %5 (%6)")
                 .arg(m_idTicket)
                 .arg(encabezado.value(1).toString())
-                .arg(encabezado.value(2).toDateTime().toString("yyyy-MM-dd HH:mm"))
+                .arg(encabezado.value(2).toDateTime().toString("dd/MM/yyyy HH:mm"))
                 .arg(encabezado.value(3).toDouble(), 0, 'f', 2)
                 .arg(encabezado.value(5).toString())
                 .arg(encabezado.value(4).toString()));
@@ -93,7 +108,7 @@ void TicketDetalleDialog::cargarDatos() {
     fila = 0;
     while (pagos.next()) {
         ui->tablePagos->insertRow(fila);
-        ui->tablePagos->setItem(fila, 0, new QTableWidgetItem(pagos.value(0).toDateTime().toString("yyyy-MM-dd HH:mm")));
+        ui->tablePagos->setItem(fila, 0, new QTableWidgetItem(pagos.value(0).toDateTime().toString("dd/MM/yyyy HH:mm")));
         ui->tablePagos->setItem(fila, 1, new QTableWidgetItem(QString::number(pagos.value(1).toDouble(), 'f', 2)));
         ui->tablePagos->setItem(fila, 2, new QTableWidgetItem(pagos.value(2).toString()));
         ++fila;

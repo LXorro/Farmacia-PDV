@@ -1,6 +1,7 @@
 #include "clientespage.h"
 #include "ui_clientespage.h"
 #include "../util/iconos.h"
+#include "../util/tablas.h"
 #include "../dialogs/clientedialog.h"
 #include "../database/sesionactual.h"
 
@@ -16,6 +17,7 @@ ClientesPage::ClientesPage(QWidget *parent) : QWidget(parent), ui(new Ui::Client
     m_model = new QSqlQueryModel(this);
 
     ui->tableView->setModel(m_model);
+    Tablas::aplicar(ui->tableView, "No hay clientes registrados.");
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
