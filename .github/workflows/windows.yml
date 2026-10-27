@@ -43,14 +43,18 @@ jobs:
             https://code.qt.io/qt/qtbase.git qtbase-src
           git -C qtbase-src sparse-checkout set src/plugins/sqldrivers src/3rdparty cmake
           VCPKG_INST="$VCPKG_INSTALLATION_ROOT/installed/x64-windows"
+          MYSQL_H=$(find "$VCPKG_INST/include" -name mysql.h | head -n1)
+          MYSQL_LIB=$(find "$VCPKG_INST/lib" -maxdepth 1 -name 'libmariadb*.lib' | head -n1)
+          echo "mysql.h: $MYSQL_H"; echo "lib: $MYSQL_LIB"
+          test -n "$MYSQL_H" && test -n "$MYSQL_LIB"
           cmake -S qtbase-src/src/plugins/sqldrivers -B build-sqldrivers -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl \
             -DQT_GENERATE_SBOM=OFF \
             -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
             -DCMAKE_INSTALL_PREFIX="$QT_ROOT_DIR" \
-            -DMySQL_INCLUDE_DIR="$VCPKG_INST/include/mariadb" \
-            -DMySQL_LIBRARY="$VCPKG_INST/lib/libmariadb.lib" \
+            -DMySQL_INCLUDE_DIR="$(dirname "$MYSQL_H")" \
+            -DMySQL_LIBRARY="$MYSQL_LIB" \
             -DFEATURE_sql_mysql=ON \
             -DFEATURE_sql_sqlite=OFF -DFEATURE_sql_psql=OFF -DFEATURE_sql_odbc=OFF -DFEATURE_sql_oci=OFF \
             -DFEATURE_sql_ibase=OFF -DFEATURE_sql_db2=OFF -DFEATURE_sql_mimer=OFF
