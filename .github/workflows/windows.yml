@@ -26,6 +26,11 @@ jobs:
           modules: ""
           cache: true
 
+      - name: Entorno MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
       # MariaDB Connector/C (cabeceras, .lib y .dll) desde vcpkg
       - name: Instalar MariaDB Connector/C
         run: |
@@ -36,26 +41,28 @@ jobs:
         run: |
           git clone --depth 1 --branch "v${QT_VERSION}" --filter=blob:none --sparse \
             https://code.qt.io/qt/qtbase.git qtbase-src
-          git -C qtbase-src sparse-checkout set src/plugins/sqldrivers cmake
+          git -C qtbase-src sparse-checkout set src/plugins/sqldrivers src/3rdparty cmake
           VCPKG_INST="$VCPKG_INSTALLATION_ROOT/installed/x64-windows"
           cmake -S qtbase-src/src/plugins/sqldrivers -B build-sqldrivers -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl \
+            -DQT_GENERATE_SBOM=OFF \
             -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR" \
             -DCMAKE_INSTALL_PREFIX="$QT_ROOT_DIR" \
             -DMySQL_INCLUDE_DIR="$VCPKG_INST/include/mariadb" \
             -DMySQL_LIBRARY="$VCPKG_INST/lib/libmariadb.lib" \
             -DFEATURE_sql_mysql=ON \
-            -DFEATURE_sql_psql=OFF -DFEATURE_sql_odbc=OFF -DFEATURE_sql_oci=OFF \
+            -DFEATURE_sql_sqlite=OFF -DFEATURE_sql_psql=OFF -DFEATURE_sql_odbc=OFF -DFEATURE_sql_oci=OFF \
             -DFEATURE_sql_ibase=OFF -DFEATURE_sql_db2=OFF -DFEATURE_sql_mimer=OFF
           cmake --build build-sqldrivers
           cmake --install build-sqldrivers
           ls "$QT_ROOT_DIR/plugins/sqldrivers"
 
       - name: Compilar la app
-        shell: cmd
         run: |
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          cmake -S app -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=%QT_ROOT_DIR%
+          cmake -S app -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl \
+            -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR"
           cmake --build build
 
       - name: Empaquetar
