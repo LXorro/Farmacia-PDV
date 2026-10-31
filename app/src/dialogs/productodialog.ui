@@ -132,22 +132,12 @@
       <widget class="QComboBox" name="comboEstado">
        <item>
         <property name="text">
-         <string>disponible</string>
+         <string>activo</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>agotado</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>suspendido</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>caducado</string>
+         <string>descontinuado</string>
         </property>
        </item>
       </widget>

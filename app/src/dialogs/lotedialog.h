@@ -20,6 +20,8 @@ private slots:
 private:
     void cargarCombos();
     void cargarLote();
+    QString estadoDerivado() const;
+    void actualizarEstado();
 
     int m_idLote = -1;
     Ui::LoteDialog *ui;

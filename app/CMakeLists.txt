@@ -17,6 +17,8 @@ add_executable(FarmaciaApp
     src/database/dbconfig.h
     src/database/databasemanager.h
     src/database/databasemanager.cpp
+    src/database/dbinicializador.h
+    src/database/dbinicializador.cpp
     src/database/sesionactual.h
     src/database/sesionactual.cpp
     src/util/passwordutil.h
@@ -84,6 +86,9 @@ add_executable(FarmaciaApp
     src/dialogs/ticketdetalledialog.h
     src/dialogs/ticketdetalledialog.cpp
     src/dialogs/ticketdetalledialog.ui
+    src/dialogs/configurarbddialog.h
+    src/dialogs/configurarbddialog.cpp
+    src/dialogs/configurarbddialog.ui
     src/dialogs/logindialog.h
     src/dialogs/logindialog.cpp
     src/dialogs/logindialog.ui

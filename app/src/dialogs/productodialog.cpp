@@ -79,7 +79,9 @@ void ProductoDialog::guardar() {
     query.bindValue(":nombre", ui->lineNombre->text().trimmed());
     query.bindValue(":marca", ui->lineMarca->text().trimmed());
     query.bindValue(":descripcion", ui->textDescripcion->toPlainText());
-    query.bindValue(":codigo", ui->lineCodigoBarras->text().trimmed());
+    // UNIQUE permite varios NULL pero no varias cadenas vacías.
+    const QString codigo = ui->lineCodigoBarras->text().trimmed();
+    query.bindValue(":codigo", codigo.isEmpty() ? QVariant(QMetaType(QMetaType::QString)) : QVariant(codigo));
     query.bindValue(":categoria", ui->comboCategoria->currentData());
     query.bindValue(":proveedor", ui->comboProveedor->currentData());
     query.bindValue(":pcompra", ui->spinPrecioCompra->value());
@@ -88,6 +90,10 @@ void ProductoDialog::guardar() {
     query.bindValue(":estado", ui->comboEstado->currentText());
 
     if (!query.exec()) {
+        if (query.lastError().nativeErrorCode() == "1062") {
+            QMessageBox::warning(this, "Código duplicado", "Ya existe otro producto con ese código de barras.");
+            return;
+        }
         QMessageBox::critical(this, "Error", "No se pudo guardar el producto:\n" + query.lastError().text());
         return;
     }

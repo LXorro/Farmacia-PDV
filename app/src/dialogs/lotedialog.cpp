@@ -12,7 +12,10 @@ LoteDialog::LoteDialog(QWidget *parent) : QDialog(parent), ui(new Ui::LoteDialog
     ui->dateFechaCaducidad->setDisplayFormat("dd/MM/yyyy");
     ui->dateFechaCaducidad->setDate(QDate::currentDate().addYears(1));
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &LoteDialog::guardar);
+    connect(ui->spinCantidad, qOverload<int>(&QSpinBox::valueChanged), this, &LoteDialog::actualizarEstado);
+    connect(ui->dateFechaCaducidad, &QDateEdit::dateChanged, this, &LoteDialog::actualizarEstado);
     cargarCombos();
+    actualizarEstado();
 
     if (!SesionActual::instance().esAdmin()) {
         int idx = ui->comboSucursal->findData(SesionActual::instance().idSucursal());
@@ -26,8 +29,21 @@ LoteDialog::~LoteDialog() {
     delete ui;
 }
 
+// El estado no se captura: se deduce de la cantidad y la caducidad.
+QString LoteDialog::estadoDerivado() const {
+    if (ui->spinCantidad->value() <= 0)
+        return "agotado";
+    if (ui->dateFechaCaducidad->date() < QDate::currentDate())
+        return "caducado";
+    return "disponible";
+}
+
+void LoteDialog::actualizarEstado() {
+    ui->labelEstadoValor->setText(estadoDerivado());
+}
+
 void LoteDialog::cargarCombos() {
-    QSqlQuery productos("SELECT id_producto, nombre FROM Productos ORDER BY nombre");
+    QSqlQuery productos("SELECT id_producto, nombre FROM Productos WHERE estado = 'activo' ORDER BY nombre");
     while (productos.next())
         ui->comboProducto->addItem(productos.value(1).toString(), productos.value(0));
 
@@ -46,24 +62,36 @@ void LoteDialog::cargarLote() {
         return;
 
     QSqlQuery query;
-    query.prepare("SELECT id_producto, id_sucursal, numero_lote, fecha_caducidad, cantidad_disponible, estado "
+    query.prepare("SELECT id_producto, id_sucursal, numero_lote, fecha_caducidad, cantidad_disponible "
                   "FROM Lotes WHERE id_lote = :id");
     query.bindValue(":id", m_idLote);
     if (!query.exec() || !query.next())
         return;
 
-    ui->comboProducto->setCurrentIndex(ui->comboProducto->findData(query.value(0)));
+    // Un producto descontinuado no sale en el combo, pero sus lotes siguen siendo editables.
+    int idxProducto = ui->comboProducto->findData(query.value(0));
+    if (idxProducto < 0) {
+        QSqlQuery nombre;
+        nombre.prepare("SELECT nombre FROM Productos WHERE id_producto = :id");
+        nombre.bindValue(":id", query.value(0));
+        if (nombre.exec() && nombre.next()) {
+            ui->comboProducto->addItem(nombre.value(0).toString(), query.value(0));
+            idxProducto = ui->comboProducto->count() - 1;
+        }
+    }
+    ui->comboProducto->setCurrentIndex(idxProducto);
     ui->comboSucursal->setCurrentIndex(ui->comboSucursal->findData(query.value(1)));
     ui->lineNumeroLote->setText(query.value(2).toString());
     ui->dateFechaCaducidad->setDate(query.value(3).toDate());
-    ui->spinCantidad->setValue(query.value(4).toInt());
-    ui->comboEstado->setCurrentText(query.value(5).toString());
 
     // Al editar, el producto/sucursal de un lote ya existente no se cambian
     // (hay ventas/movimientos de inventario ligados a este lote por id).
     ui->comboProducto->setEnabled(false);
     ui->comboSucursal->setEnabled(false);
     ui->labelCantidad->setText("Cantidad disponible:");
+    // Al editar se permite dejar el lote en 0 (agotado manualmente / merma).
+    ui->spinCantidad->setMinimum(0);
+    ui->spinCantidad->setValue(query.value(4).toInt());
 }
 
 void LoteDialog::guardar() {
@@ -90,7 +118,7 @@ void LoteDialog::guardar() {
     query.bindValue(":numero", ui->lineNumeroLote->text().trimmed());
     query.bindValue(":caducidad", ui->dateFechaCaducidad->date());
     query.bindValue(":cantidad", ui->spinCantidad->value());
-    query.bindValue(":estado", ui->comboEstado->currentText());
+    query.bindValue(":estado", estadoDerivado());
 
     if (!query.exec()) {
         QMessageBox::critical(this, "Error", "No se pudo guardar el lote:\n" + query.lastError().text());

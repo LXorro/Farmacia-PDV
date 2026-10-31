@@ -1,0 +1,4 @@
+# Hashes of file build rules.
+32d9d9df3f8e496048189903bb2a2917 CMakeFiles/FarmaciaApp_autogen
+1be815a43c9024546b350f184da6b8b6 FarmaciaApp_autogen/3YJK5W5UP7/qrc_resources.cpp
+c731544b41823e210f4bc886ad858b69 FarmaciaApp_autogen/timestamp

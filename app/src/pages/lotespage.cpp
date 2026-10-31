@@ -42,7 +42,10 @@ void LotesPage::refrescar() {
     QString sql =
         "SELECT l.id_lote AS 'ID', p.nombre AS 'Producto', s.nombre AS 'Sucursal', "
         "l.numero_lote AS 'N.º de lote', l.fecha_caducidad AS 'Caducidad', "
-        "l.cantidad_disponible AS 'Disponible', l.estado AS 'Estado' "
+        "l.cantidad_disponible AS 'Disponible', "
+        "CASE WHEN l.cantidad_disponible <= 0 THEN 'agotado' "
+        "WHEN l.fecha_caducidad < CURDATE() THEN 'caducado' "
+        "ELSE 'disponible' END AS 'Estado' "
         "FROM Lotes l "
         "JOIN Productos p ON p.id_producto = l.id_producto "
         "JOIN Sucursales s ON s.id_sucursal = l.id_sucursal ";

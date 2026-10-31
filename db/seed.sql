@@ -15,10 +15,10 @@ INSERT INTO Proveedores (nombre_empresa, telefono, correo, direccion, estado) VA
     ('Laboratorios Salud SA', '5553334444', 'contacto@labsalud.com', 'Zona Industrial 2', 'activo');
 
 INSERT INTO Productos (nombre, marca, descripcion, codigo_barras, id_categoria, id_proveedor, precio_compra, precio_venta, requiere_receta, estado) VALUES
-    ('Paracetamol 500mg', 'GenFar', 'Caja con 20 tabletas', '7501000000011', 1, 1, 15.00, 28.00, FALSE, 'disponible'),
-    ('Amoxicilina 500mg', 'Farmex', 'Caja con 12 cápsulas', '7501000000028', 1, 1, 40.00, 70.00, TRUE, 'disponible'),
-    ('Jabón antibacterial', 'Cuidamax', 'Barra 120g', '7501000000035', 2, 2, 8.00, 18.00, FALSE, 'disponible'),
-    ('Multivitamínico', 'VitaPlus', 'Frasco 30 tabletas', '7501000000042', 3, 2, 60.00, 110.00, FALSE, 'disponible');
+    ('Paracetamol 500mg', 'GenFar', 'Caja con 20 tabletas', '7501000000011', 1, 1, 15.00, 28.00, FALSE, 'activo'),
+    ('Amoxicilina 500mg', 'Farmex', 'Caja con 12 cápsulas', '7501000000028', 1, 1, 40.00, 70.00, TRUE, 'activo'),
+    ('Jabón antibacterial', 'Cuidamax', 'Barra 120g', '7501000000035', 2, 2, 8.00, 18.00, FALSE, 'activo'),
+    ('Multivitamínico', 'VitaPlus', 'Frasco 30 tabletas', '7501000000042', 3, 2, 60.00, 110.00, FALSE, 'activo');
 
 INSERT INTO Empleados (id_sucursal, nombre, apellido_paterno, apellido_materno, puesto, telefono, correo, estado) VALUES
     (1, 'Ana', 'García', 'López', 'Farmacéutico', '5559990001', 'ana.garcia@farmacia.com', 'activo'),

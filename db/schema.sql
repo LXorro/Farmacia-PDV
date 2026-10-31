@@ -63,7 +63,8 @@ CREATE TABLE Productos (
     precio_compra    DECIMAL(10,2) NOT NULL DEFAULT 0,
     precio_venta     DECIMAL(10,2) NOT NULL DEFAULT 0,
     requiere_receta  BOOLEAN NOT NULL DEFAULT FALSE,
-    estado           ENUM('disponible', 'agotado', 'suspendido', 'caducado') NOT NULL DEFAULT 'disponible',
+    -- Solo refleja si el producto sigue en catálogo; agotado/caducado se derivan de Lotes.
+    estado           ENUM('activo', 'descontinuado') NOT NULL DEFAULT 'activo',
     CONSTRAINT fk_productos_categoria FOREIGN KEY (id_categoria) REFERENCES Categorias(id_categoria),
     CONSTRAINT fk_productos_proveedor FOREIGN KEY (id_proveedor) REFERENCES Proveedores(id_proveedor)
 ) ENGINE=InnoDB;

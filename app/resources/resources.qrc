@@ -1,6 +1,8 @@
 <RCC>
     <qresource prefix="/">
         <file>style.qss</file>
+        <!-- Esquema único de la BD, compartido con db/ y usado por el asistente de primer arranque -->
+        <file alias="db/schema.sql">../../db/schema.sql</file>
         <file>logo.svg</file>
         <file>logo-mark.svg</file>
         <file>fonts/SpaceMono-Regular.ttf</file>

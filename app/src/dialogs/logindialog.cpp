@@ -20,7 +20,7 @@ LoginDialog::LoginDialog(QWidget *parent) : QDialog(parent), ui(new Ui::LoginDia
     ui->btnIngresar->setIcon(Iconos::ingresar());
     ui->btnRegistrar->setIcon(Iconos::registrarCuenta());
 
-    ui->lineContrasena->setFocus();
+    ui->lineUsuario->setFocus();
 }
 
 LoginDialog::~LoginDialog() {

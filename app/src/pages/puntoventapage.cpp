@@ -118,11 +118,11 @@ void PuntoVentaPage::agregarAlCarrito() {
 
     QSqlQuery buscar;
     buscar.prepare("SELECT id_producto, nombre, precio_venta FROM Productos "
-                   "WHERE estado = 'disponible' AND (codigo_barras = :texto OR nombre LIKE :like) LIMIT 1");
+                   "WHERE estado = 'activo' AND (codigo_barras = :texto OR nombre LIKE :like) LIMIT 1");
     buscar.bindValue(":texto", texto);
     buscar.bindValue(":like", "%" + texto + "%");
     if (!buscar.exec() || !buscar.next()) {
-        QMessageBox::warning(this, "Producto no encontrado", "No se encontró un producto disponible con ese código o nombre.");
+        QMessageBox::warning(this, "Producto no encontrado", "No se encontró un producto activo con ese código o nombre.");
         return;
     }
 
@@ -133,6 +133,7 @@ void PuntoVentaPage::agregarAlCarrito() {
     QSqlQuery lote;
     lote.prepare("SELECT id_lote, numero_lote, cantidad_disponible FROM Lotes "
                  "WHERE id_producto = :pid AND id_sucursal = :suc AND cantidad_disponible > 0 "
+                 "AND (fecha_caducidad IS NULL OR fecha_caducidad >= CURDATE()) "
                  "ORDER BY fecha_caducidad ASC LIMIT 1");
     lote.bindValue(":pid", idProducto);
     lote.bindValue(":suc", idSucursal);

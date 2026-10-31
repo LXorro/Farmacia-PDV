@@ -50,11 +50,7 @@
       <widget class="QLabel" name="labelEstado"><property name="text"><string>Estado:</string></property></widget>
      </item>
      <item row="5" column="1">
-      <widget class="QComboBox" name="comboEstado">
-       <item><property name="text"><string>disponible</string></property></item>
-       <item><property name="text"><string>agotado</string></property></item>
-       <item><property name="text"><string>caducado</string></property></item>
-      </widget>
+      <widget class="QLabel" name="labelEstadoValor"/>
      </item>
     </layout>
    </item>

@@ -1,0 +1,5 @@
+/home/xrr/Projects/PDV/app/CMakeFiles/FarmaciaApp.dir
+/home/xrr/Projects/PDV/app/CMakeFiles/edit_cache.dir
+/home/xrr/Projects/PDV/app/CMakeFiles/rebuild_cache.dir
+/home/xrr/Projects/PDV/app/CMakeFiles/FarmaciaApp_autogen_timestamp_deps.dir
+/home/xrr/Projects/PDV/app/CMakeFiles/FarmaciaApp_autogen.dir

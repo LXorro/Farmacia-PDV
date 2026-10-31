@@ -14,7 +14,7 @@
 | precio_compra | DECIMAL(10,2) | Precio de compra |
 | precio_venta | DECIMAL(10,2) | Precio de venta |
 | requiere_receta | BOOLEAN | Indica si el producto requiere receta médica |
-| estado | VARCHAR(20) | Estado del producto: disponible, agotado, suspendido o caducado |
+| estado | VARCHAR(20) | Estado del producto en catálogo: activo o descontinuado (agotado/caducado se derivan de `Lotes`) |
 
 > `stock` y `fecha_caducidad` ya no viven en Productos: un mismo producto puede tener varios lotes con cantidades y caducidades distintas. Ver tabla **Lotes**.
 

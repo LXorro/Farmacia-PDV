@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ConfigurarBdDialog</class>
+ <widget class="QDialog" name="ConfigurarBdDialog">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>500</width><height>330</height></rect>
+  </property>
+  <property name="windowTitle"><string>Configurar base de datos — Farmacia</string></property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="labelInfo">
+     <property name="text"><string>Es la primera vez que se usa la aplicación en este equipo, o la base de datos no está lista. Indica una cuenta administradora de MariaDB (normalmente «root»): se usará una sola vez para crear la base «farmacia» y un usuario propio de la aplicación. La contraseña de administrador no se guarda.</string></property>
+     <property name="wordWrap"><bool>true</bool></property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="labelPuerto"><property name="text"><string>Puerto de MariaDB:</string></property></widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QSpinBox" name="spinPuerto">
+       <property name="minimum"><number>1</number></property>
+       <property name="maximum"><number>65535</number></property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelUsuarioAdmin"><property name="text"><string>Administrador:</string></property></widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="lineUsuarioAdmin">
+       <property name="text"><string>root</string></property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelContrasenaAdmin"><property name="text"><string>Contraseña:</string></property></widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="lineContrasenaAdmin">
+       <property name="echoMode"><enum>QLineEdit::Password</enum></property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelError">
+     <property name="text"><string/></property>
+     <property name="wordWrap"><bool>true</bool></property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="botonesLayout">
+     <item>
+      <spacer name="spacer"><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnCancelar">
+       <property name="text"><string>Cancelar</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnConfigurar">
+       <property name="text"><string>Configurar</string></property>
+       <property name="default"><bool>true</bool></property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+</ui>
