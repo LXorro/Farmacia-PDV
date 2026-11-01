@@ -88,6 +88,19 @@ está físicamente, y funciona sin conexión.
   central solo entran admins.
 - Las asignaciones se administran desde el central.
 
+## Indicador de sincronización
+
+La barra de estado del app (solo en Central y Sucursal) muestra el estado de la replicación, y se
+actualiza cada 10 s con `SHOW ALL REPLICAS STATUS` sobre la base local (la cuenta `farmacia_app`
+recibe `REPLICA MONITOR`, que solo permite ver ese estado):
+
+- verde **Sincronizado**: los hilos de replicación corren y el retraso es ≤ 30 s.
+- naranja **Sincronizando (retraso N s)**.
+- rojo **Sin conexión con el central (trabajando en local)**; en el central dice con qué sucursales.
+
+Desde la sucursal solo se ve la replicación *de bajada* (central → sucursal); si la de subida
+va atrasada, se nota en el central.
+
 ## Límites conocidos
 
 - Un admin no puede corregir desde el central el stock ni los tickets de una

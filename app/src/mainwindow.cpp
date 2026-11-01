@@ -1,9 +1,12 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QLabel>
 #include <QListWidgetItem>
 #include <QMetaObject>
 #include <QSize>
+#include <QStatusBar>
+#include <QTimer>
 
 #include "database/sesionactual.h"
 #include "util/iconos.h"
@@ -20,6 +23,7 @@
 #include "pages/usuariospage.h"
 #include "pages/asignacionespage.h"
 #include "database/databasemanager.h"
+#include "database/estadosync.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
@@ -116,6 +120,29 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     QString titulo = QString("Farmacia — %1 (%2) — %3").arg(sesion.nombreUsuario(), sesion.rol(), alcance);
     setWindowTitle(titulo);       // para la barra de tareas / alt-tab
     ui->labelTituloApp->setText(titulo);  // visible en la barra propia
+
+    // Indicador de replicación (solo en Central y Sucursal; un equipo único no replica).
+    if (DatabaseManager::funcion() != DatabaseManager::Funcion::Unico) {
+        m_labelSync = new QLabel(this);
+        statusBar()->addPermanentWidget(m_labelSync);
+        auto *temporizador = new QTimer(this);
+        connect(temporizador, &QTimer::timeout, this, &MainWindow::actualizarSync);
+        temporizador->start(10000);
+        actualizarSync();
+    }
+}
+
+void MainWindow::actualizarSync() {
+    const EstadoSync::Estado estado = EstadoSync::consultar();
+    QString color;
+    switch (estado.nivel) {
+    case EstadoSync::Nivel::Bien: color = "#2e7d32"; break;
+    case EstadoSync::Nivel::Retraso: color = "#ef6c00"; break;
+    case EstadoSync::Nivel::SinConexion: color = "#c62828"; break;
+    default: color = "gray"; break;
+    }
+    m_labelSync->setText(QString("<span style='color:%1'>●</span> %2").arg(color, estado.texto));
+    m_labelSync->setToolTip(estado.detalle);
 }
 
 MainWindow::~MainWindow() {

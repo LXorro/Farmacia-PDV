@@ -125,6 +125,9 @@ Resultado inicializar(const QString &host, int puerto, const QString &adminUsuar
             ok = ok && ejecutar(query, QString("CREATE USER IF NOT EXISTS %1 IDENTIFIED BY '%2'").arg(cuenta, contrasena), error);
             ok = ok && ejecutar(query, QString("ALTER USER %1 IDENTIFIED BY '%2'").arg(cuenta, contrasena), error);
             ok = ok && ejecutar(query, QString("REVOKE ALL PRIVILEGES, GRANT OPTION FROM %1").arg(cuenta), error);
+            // Solo para el indicador de sincronización: ver el estado de la replicación, nada más.
+            if (rol != Rol::Unico)
+                ok = ok && ejecutar(query, QString("GRANT REPLICA MONITOR ON *.* TO %1").arg(cuenta), error);
             if (rol == Rol::Unico) {
                 ok = ok && ejecutar(query, QString("GRANT ALL PRIVILEGES ON %1.* TO %2").arg(DbConfig::kDatabase, cuenta), error);
                 continue;

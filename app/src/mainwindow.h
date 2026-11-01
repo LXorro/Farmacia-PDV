@@ -6,6 +6,8 @@ namespace Ui {
 class MainWindow;
 }
 
+class QLabel;
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
@@ -14,7 +16,9 @@ public:
 
 private slots:
     void irAPagina(const QString &nombrePagina);
+    void actualizarSync();
 
 private:
     Ui::MainWindow *ui;
+    QLabel *m_labelSync = nullptr;
 };

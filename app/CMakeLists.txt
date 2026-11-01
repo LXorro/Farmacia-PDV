@@ -19,6 +19,8 @@ add_executable(FarmaciaApp
     src/database/databasemanager.cpp
     src/database/dbinicializador.h
     src/database/dbinicializador.cpp
+    src/database/estadosync.h
+    src/database/estadosync.cpp
     src/database/sesionactual.h
     src/database/sesionactual.cpp
     src/util/passwordutil.h
