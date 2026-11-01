@@ -18,6 +18,8 @@
 #include "pages/sucursalespage.h"
 #include "pages/ticketspage.h"
 #include "pages/usuariospage.h"
+#include "pages/asignacionespage.h"
+#include "database/databasemanager.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
@@ -32,6 +34,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(ui->btnCerrarApp, &QPushButton::clicked, this, &QWidget::close);
 
     const SesionActual &sesion = SesionActual::instance();
+    const auto funcion = DatabaseManager::funcion();
+    // Cada tabla tiene un único nodo escritor (el permiso también está en la base): en el central lo
+    // operativo se consulta pero no se edita; en una sucursal, lo que baja del central.
+    auto soloLectura = [](QWidget *pagina) {
+        for (const char *nombre : {"btnNuevo", "btnEditar", "btnEliminar", "btnRevocar"})
+            if (auto *boton = pagina->findChild<QPushButton *>(nombre))
+                boton->setEnabled(false);
+        return pagina;
+    };
+    const bool central = funcion == DatabaseManager::Funcion::Central;
+    const bool sucursal = funcion == DatabaseManager::Funcion::Sucursal;
 
     ui->listMenu->setIconSize(QSize(22, 22));
     ui->listMenu->setSpacing(1);
@@ -45,20 +58,23 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     // Pantallas operativas: visibles para empleado (limitadas a su sucursal
     // dentro de cada página) y para admin (sin restricción).
-    ui->listMenu->addItem(new QListWidgetItem(Iconos::puntoDeVenta(), "Punto de Venta"));
-    ui->stackedWidget->addWidget(new PuntoVentaPage(this));
+    // El central no vende: solo consulta lo que venden las sucursales.
+    if (!central) {
+        ui->listMenu->addItem(new QListWidgetItem(Iconos::puntoDeVenta(), "Punto de Venta"));
+        ui->stackedWidget->addWidget(new PuntoVentaPage(this));
+    }
 
     ui->listMenu->addItem(new QListWidgetItem(Iconos::productos(), "Productos"));
     ui->stackedWidget->addWidget(new ProductosPage(this));
 
     ui->listMenu->addItem(new QListWidgetItem(Iconos::clientes(), "Clientes"));
-    ui->stackedWidget->addWidget(new ClientesPage(this));
+    ui->stackedWidget->addWidget(central ? soloLectura(new ClientesPage(this)) : new ClientesPage(this));
 
     ui->listMenu->addItem(new QListWidgetItem(Iconos::tickets(), "Tickets"));
     ui->stackedWidget->addWidget(new TicketsPage(this));
 
     ui->listMenu->addItem(new QListWidgetItem(Iconos::inventario(), "Inventario"));
-    ui->stackedWidget->addWidget(new LotesPage(this));
+    ui->stackedWidget->addWidget(central ? soloLectura(new LotesPage(this)) : new LotesPage(this));
 
     ui->listMenu->addItem(new QListWidgetItem(Iconos::categorias(), "Categorías"));
     ui->stackedWidget->addWidget(new CategoriasPage(this));
@@ -66,16 +82,23 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     // Pantallas de administración: solo admin.
     if (sesion.esAdmin()) {
         ui->listMenu->addItem(new QListWidgetItem(Iconos::proveedores(), "Proveedores"));
-        ui->stackedWidget->addWidget(new ProveedoresPage(this));
+        ui->stackedWidget->addWidget(sucursal ? soloLectura(new ProveedoresPage(this)) : new ProveedoresPage(this));
 
         ui->listMenu->addItem(new QListWidgetItem(Iconos::empleados(), "Empleados"));
-        ui->stackedWidget->addWidget(new EmpleadosPage(this));
+        ui->stackedWidget->addWidget(sucursal ? soloLectura(new EmpleadosPage(this)) : new EmpleadosPage(this));
 
         ui->listMenu->addItem(new QListWidgetItem(Iconos::sucursales(), "Sucursales"));
-        ui->stackedWidget->addWidget(new SucursalesPage(this));
+        ui->stackedWidget->addWidget(sucursal ? soloLectura(new SucursalesPage(this)) : new SucursalesPage(this));
 
         ui->listMenu->addItem(new QListWidgetItem(Iconos::usuarios(), "Usuarios"));
         ui->stackedWidget->addWidget(new UsuariosPage(this));
+
+        // Asignaciones temporales entre sucursales: solo existen en una instalación con central.
+        if (central || sucursal) {
+            ui->listMenu->addItem(new QListWidgetItem(Iconos::sucursales(), "Asignaciones"));
+            auto *asignaciones = new AsignacionesPage(this);
+            ui->stackedWidget->addWidget(sucursal ? soloLectura(asignaciones) : asignaciones);
+        }
     }
 
     connect(ui->listMenu, &QListWidget::currentRowChanged, this, [this](int row) {
@@ -89,7 +112,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     });
     ui->listMenu->setCurrentRow(0);
 
-    QString alcance = sesion.esAdmin() ? "todas las sucursales" : sesion.nombreSucursal();
+    QString alcance = sesion.veTodasLasSucursales() ? "todas las sucursales" : sesion.nombreSucursal();
     QString titulo = QString("Farmacia — %1 (%2) — %3").arg(sesion.nombreUsuario(), sesion.rol(), alcance);
     setWindowTitle(titulo);       // para la barra de tareas / alt-tab
     ui->labelTituloApp->setText(titulo);  // visible en la barra propia

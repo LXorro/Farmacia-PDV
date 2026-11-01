@@ -9,36 +9,16 @@
 RegistroDialog::RegistroDialog(QWidget *parent) : QDialog(parent), ui(new Ui::RegistroDialog) {
     ui->setupUi(this);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &RegistroDialog::guardar);
-    cargarEmpleadosSinUsuario();
+    // El administrador inicial no está ligado a un empleado (aún no existe ninguno).
+    ui->labelEmpleado->setVisible(false);
+    ui->comboEmpleado->setVisible(false);
 }
 
 RegistroDialog::~RegistroDialog() {
     delete ui;
 }
 
-void RegistroDialog::cargarEmpleadosSinUsuario() {
-    ui->comboEmpleado->clear();
-    QSqlQuery query(
-        "SELECT e.id_empleado, e.nombre, e.apellido_paterno, s.nombre "
-        "FROM Empleados e "
-        "JOIN Sucursales s ON s.id_sucursal = e.id_sucursal "
-        "LEFT JOIN Usuarios u ON u.id_empleado = e.id_empleado "
-        "WHERE u.id_usuario IS NULL AND e.estado = 'activo' "
-        "ORDER BY e.nombre");
-    while (query.next()) {
-        QString etiqueta = QString("%1 %2 (%3)").arg(query.value(1).toString(), query.value(2).toString(), query.value(3).toString());
-        ui->comboEmpleado->addItem(etiqueta, query.value(0));
-    }
-}
-
 void RegistroDialog::guardar() {
-    if (ui->comboEmpleado->currentIndex() < 0) {
-        QMessageBox::warning(this, "Validación",
-                              "No hay empleados disponibles sin cuenta. Pide a un administrador que "
-                              "dé de alta tu usuario en la pantalla de Empleados/Usuarios.");
-        return;
-    }
-
     QString usuario = ui->lineUsuario->text().trimmed();
     QString contrasena = ui->lineContrasena->text();
     QString confirmar = ui->lineConfirmar->text();
@@ -56,22 +36,26 @@ void RegistroDialog::guardar() {
         return;
     }
 
+    // Solo vale mientras no exista ninguna cuenta; después las crea un administrador.
     QSqlQuery conteo("SELECT COUNT(*) FROM Usuarios");
     conteo.next();
-    QString rol = conteo.value(0).toInt() == 0 ? "admin" : "empleado";
+    if (conteo.value(0).toInt() != 0) {
+        QMessageBox::warning(this, "Registro cerrado",
+                              "Ya existen usuarios. Pide a un administrador que cree tu cuenta.");
+        reject();
+        return;
+    }
 
     QString sal = PasswordUtil::generarSal();
     QString hash = PasswordUtil::hashear(contrasena, sal);
 
     QSqlQuery insertar;
     insertar.prepare(
-        "INSERT INTO Usuarios (id_empleado, nombre_usuario, contrasena_hash, sal, rol) "
-        "VALUES (:empleado, :usuario, :hash, :sal, :rol)");
-    insertar.bindValue(":empleado", ui->comboEmpleado->currentData());
+        "INSERT INTO Usuarios (nombre_usuario, contrasena_hash, sal, rol) "
+        "VALUES (:usuario, :hash, :sal, 'admin')");
     insertar.bindValue(":usuario", usuario);
     insertar.bindValue(":hash", hash);
     insertar.bindValue(":sal", sal);
-    insertar.bindValue(":rol", rol);
 
     if (!insertar.exec()) {
         QMessageBox::critical(this, "Error", "No se pudo registrar el usuario (¿el nombre de usuario ya existe?):\n" + insertar.lastError().text());

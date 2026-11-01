@@ -50,7 +50,7 @@ void LotesPage::refrescar() {
         "JOIN Productos p ON p.id_producto = l.id_producto "
         "JOIN Sucursales s ON s.id_sucursal = l.id_sucursal ";
 
-    if (!SesionActual::instance().esAdmin())
+    if (!SesionActual::instance().veTodasLasSucursales())
         sql += QString("WHERE l.id_sucursal = %1 ").arg(SesionActual::instance().idSucursal());
 
     sql += "ORDER BY l.fecha_caducidad ASC";

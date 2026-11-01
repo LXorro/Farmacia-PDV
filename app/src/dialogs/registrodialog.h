@@ -19,8 +19,6 @@ private slots:
     void guardar();
 
 private:
-    void cargarEmpleadosSinUsuario();
-
     QString m_nombreUsuarioRegistrado;
     Ui::RegistroDialog *ui;
 };

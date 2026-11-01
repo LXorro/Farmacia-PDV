@@ -74,7 +74,7 @@ void TicketsPage::refrescar() {
         "LEFT JOIN Clientes c ON c.id_cliente = t.id_cliente ";
 
     QStringList condiciones;
-    if (!SesionActual::instance().esAdmin())
+    if (!SesionActual::instance().veTodasLasSucursales())
         condiciones << QString("t.id_sucursal = %1").arg(SesionActual::instance().idSucursal());
     if (!ui->checkTodos->isChecked())
         condiciones << "DATE(t.fecha_venta) = :fecha";
@@ -103,7 +103,7 @@ void TicketsPage::refrescar() {
         "JOIN Empleados e ON e.id_empleado = d.id_empleado ";
 
     QStringList condicionesDev;
-    if (!SesionActual::instance().esAdmin())
+    if (!SesionActual::instance().veTodasLasSucursales())
         condicionesDev << QString("d.id_sucursal = %1").arg(SesionActual::instance().idSucursal());
     if (!ui->checkTodos->isChecked())
         condicionesDev << "DATE(d.fecha_devolucion) = :fecha";

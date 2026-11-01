@@ -3,7 +3,7 @@
  <class>ConfigurarBdDialog</class>
  <widget class="QDialog" name="ConfigurarBdDialog">
   <property name="geometry">
-   <rect><x>0</x><y>0</y><width>500</width><height>330</height></rect>
+   <rect><x>0</x><y>0</y><width>520</width><height>470</height></rect>
   </property>
   <property name="windowTitle"><string>Configurar base de datos — Farmacia</string></property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -40,7 +40,38 @@
        <property name="echoMode"><enum>QLineEdit::Password</enum></property>
       </widget>
      </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelFuncion"><property name="text"><string>Función de este equipo:</string></property></widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QComboBox" name="comboFuncion">
+       <item><property name="text"><string>Equipo único (sin sincronización)</string></property></item>
+       <item><property name="text"><string>Central</string></property></item>
+       <item><property name="text"><string>Sucursal</string></property></item>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="labelHostCentral"><property name="text"><string>Dirección del central:</string></property></widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLineEdit" name="lineHostCentral"/>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="labelPuertoCentral"><property name="text"><string>Puerto del central:</string></property></widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QSpinBox" name="spinPuertoCentral">
+       <property name="minimum"><number>1</number></property>
+       <property name="maximum"><number>65535</number></property>
+      </widget>
+     </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelAyudaFuncion">
+     <property name="wordWrap"><bool>true</bool></property>
+     <property name="text"><string/></property>
+    </widget>
    </item>
    <item>
     <widget class="QLabel" name="labelError">

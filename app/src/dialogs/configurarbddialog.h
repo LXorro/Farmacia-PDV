@@ -15,6 +15,7 @@ public:
 
 private slots:
     void configurar();
+    void actualizarFuncion();
 
 private:
     Ui::ConfigurarBdDialog *ui;

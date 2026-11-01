@@ -1,11 +1,14 @@
 #include "logindialog.h"
 #include "ui_logindialog.h"
 #include "registrodialog.h"
+#include "../database/databasemanager.h"
 #include "../database/sesionactual.h"
 #include "../util/passwordutil.h"
 #include "../util/iconos.h"
 
 #include <QIcon>
+#include <QInputDialog>
+#include <QMessageBox>
 #include <QSqlQuery>
 
 LoginDialog::LoginDialog(QWidget *parent) : QDialog(parent), ui(new Ui::LoginDialog) {
@@ -19,6 +22,16 @@ LoginDialog::LoginDialog(QWidget *parent) : QDialog(parent), ui(new Ui::LoginDia
 
     ui->btnIngresar->setIcon(Iconos::ingresar());
     ui->btnRegistrar->setIcon(Iconos::registrarCuenta());
+
+    // El registro solo existe para crear el administrador inicial. Una sucursal nunca crea
+    // cuentas aquí: las recibe del central por replicación.
+    QSqlQuery conteo("SELECT COUNT(*) FROM Usuarios");
+    const bool sinUsuarios = conteo.next() && conteo.value(0).toInt() == 0;
+    const bool sucursal = DatabaseManager::esSucursal();
+    ui->btnRegistrar->setText("Crear administrador inicial");
+    ui->btnRegistrar->setVisible(sinUsuarios && !sucursal);
+    if (sinUsuarios && sucursal)
+        ui->labelError->setText("Aún no se han recibido usuarios del central. Verifica la conexión y vuelve a intentar.");
 
     ui->lineUsuario->setFocus();
 }
@@ -71,8 +84,82 @@ void LoginDialog::ingresar() {
     int idSucursal = query.value(6).isNull() ? -1 : query.value(6).toInt();
     QString nombreSucursal = query.value(7).toString();
 
+    // Reglas según la función de este equipo (ver DatabaseManager::Funcion).
+    QString motivo;
+    if (!validarEquipo(rol, idEmpleado, idSucursal, nombreSucursal, motivo)) {
+        ui->labelError->setText(motivo);
+        return;
+    }
+
     SesionActual::instance().iniciar(idUsuario, usuario, rol, idEmpleado, idSucursal, nombreSucursal);
     accept();
+}
+
+// Decide si este usuario puede operar en este equipo y, en una sucursal, fija la sucursal de la sesión:
+// la del equipo (un empleado de otra sucursal solo entra con una asignación temporal vigente, es decir,
+// estando físicamente aquí).
+bool LoginDialog::validarEquipo(const QString &rol, int idEmpleado, int &idSucursal, QString &nombreSucursal,
+                                QString &motivo) {
+    const auto funcion = DatabaseManager::funcion();
+    if (funcion == DatabaseManager::Funcion::Unico)
+        return true;
+
+    if (funcion == DatabaseManager::Funcion::Central) {
+        if (rol == "admin")
+            return true;
+        motivo = "Este equipo es de administración: solo los administradores pueden entrar aquí.";
+        return false;
+    }
+
+    // Sucursal
+    int idNodo = DatabaseManager::idSucursalNodo();
+    if (idNodo < 0) {
+        if (rol != "admin") {
+            motivo = "Este equipo aún no tiene sucursal asignada. Un administrador debe iniciar sesión primero.";
+            return false;
+        }
+        QSqlQuery sucursales("SELECT id_sucursal, nombre FROM Sucursales WHERE rol = 'sucursal' AND estado = 'activa' ORDER BY nombre");
+        QStringList nombres;
+        QList<int> ids;
+        while (sucursales.next()) {
+            ids << sucursales.value(0).toInt();
+            nombres << sucursales.value(1).toString();
+        }
+        if (ids.isEmpty()) {
+            motivo = "Aún no se han recibido sucursales del central. Verifica la conexión y vuelve a intentar.";
+            return false;
+        }
+        bool aceptado = false;
+        const QString elegida = QInputDialog::getItem(this, "Sucursal de este equipo",
+                                                      "¿A qué sucursal pertenece este equipo? No podrá cambiarse después.",
+                                                      nombres, 0, false, &aceptado);
+        if (!aceptado) {
+            motivo = "Hay que elegir la sucursal de este equipo para continuar.";
+            return false;
+        }
+        idNodo = ids.at(nombres.indexOf(elegida));
+        DatabaseManager::instance().guardarSucursalNodo(idNodo);
+    }
+
+    if (rol != "admin" && idSucursal != idNodo) {
+        QSqlQuery asignacion;
+        asignacion.prepare("SELECT 1 FROM Asignaciones_Temporales WHERE id_empleado = :emp AND id_sucursal = :suc "
+                           "AND estado = 'aprobada' AND CURDATE() BETWEEN fecha_inicio AND fecha_fin LIMIT 1");
+        asignacion.bindValue(":emp", idEmpleado);
+        asignacion.bindValue(":suc", idNodo);
+        if (!asignacion.exec() || !asignacion.next()) {
+            motivo = "No estás asignado a esta sucursal. Pide a un administrador que autorice una asignación temporal.";
+            return false;
+        }
+    }
+
+    QSqlQuery nombre;
+    nombre.prepare("SELECT nombre FROM Sucursales WHERE id_sucursal = :id");
+    nombre.bindValue(":id", idNodo);
+    if (nombre.exec() && nombre.next())
+        nombreSucursal = nombre.value(0).toString();
+    idSucursal = idNodo;
+    return true;
 }
 
 void LoginDialog::abrirRegistro() {
@@ -82,6 +169,7 @@ void LoginDialog::abrirRegistro() {
         ui->lineContrasena->clear();
         ui->lineContrasena->setFocus();
         ui->labelError->setStyleSheet("color: #2e7d32;");
-        ui->labelError->setText("Cuenta creada. Ya puedes iniciar sesión.");
+        ui->labelError->setText("Administrador creado. Ya puedes iniciar sesión.");
+        ui->btnRegistrar->setVisible(false);
     }
 }

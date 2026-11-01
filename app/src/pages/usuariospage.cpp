@@ -3,9 +3,12 @@
 #include "../util/iconos.h"
 #include "../util/tablas.h"
 #include "../dialogs/usuariodialog.h"
+#include "../database/databasemanager.h"
 #include "../database/sesionactual.h"
 
 #include <QHeaderView>
+#include <QInputDialog>
+#include <QLineEdit>
 #include <QMessageBox>
 #include <QSqlError>
 #include <QSqlQuery>
@@ -42,19 +45,46 @@ UsuariosPage::~UsuariosPage() {
     delete ui;
 }
 
+bool UsuariosPage::asegurarConexion() {
+    auto &gestor = DatabaseManager::instance();
+    if (gestor.centralConectado())
+        return true;
+
+    bool aceptado = false;
+    const QString contrasena = QInputDialog::getText(
+        this, "Conexión con el central",
+        "Las cuentas se administran en el central. Escribe la contraseña de administración remota "
+        "(cuenta «farmacia_remoto»):", QLineEdit::Password, QString(), &aceptado);
+    if (!aceptado)
+        return false;
+
+    if (!gestor.conectarCentral(contrasena)) {
+        QMessageBox::warning(this, "Sin conexión con el central",
+                             "No se pudo conectar con el central; las cuentas no pueden crearse ni "
+                             "modificarse sin conexión.\n\n" + gestor.lastError());
+        return false;
+    }
+    return true;
+}
+
 void UsuariosPage::refrescar() {
+    // Con el central a la vista se lista lo que ahí está; si no, la copia local replicada.
+    auto &gestor = DatabaseManager::instance();
+    const QSqlDatabase base = gestor.centralConectado() ? gestor.dbUsuarios() : gestor.db();
     m_model->setQuery(
         "SELECT u.id_usuario AS 'ID', "
         "COALESCE(CONCAT(e.nombre, ' ', e.apellido_paterno), '—') AS 'Empleado', "
         "u.nombre_usuario AS 'Usuario', u.rol AS 'Rol', u.estado AS 'Estado' "
         "FROM Usuarios u "
         "LEFT JOIN Empleados e ON e.id_empleado = u.id_empleado "
-        "ORDER BY u.nombre_usuario");
+        "ORDER BY u.nombre_usuario", base);
     ui->tableView->hideColumn(0);  // ID: catálogo puro, no aporta al usuario
     ui->tableView->resizeColumnsToContents();
 }
 
 void UsuariosPage::nuevoUsuario() {
+    if (!asegurarConexion())
+        return;
     UsuarioDialog dialog(this);
     if (dialog.exec() == QDialog::Accepted)
         refrescar();
@@ -67,6 +97,8 @@ void UsuariosPage::editarUsuario() {
         return;
     }
     int id = m_model->data(m_model->index(seleccion.first().row(), 0)).toInt();
+    if (!asegurarConexion())
+        return;
 
     UsuarioDialog dialog(this);
     dialog.setUsuarioId(id);
@@ -86,10 +118,12 @@ void UsuariosPage::eliminarUsuario() {
         return;
     }
 
+    if (!asegurarConexion())
+        return;
     if (QMessageBox::question(this, "Confirmar", "¿Eliminar el usuario seleccionado?") != QMessageBox::Yes)
         return;
 
-    QSqlQuery query;
+    QSqlQuery query(DatabaseManager::instance().dbUsuarios());
     query.prepare("DELETE FROM Usuarios WHERE id_usuario = :id");
     query.bindValue(":id", id);
     if (!query.exec()) {

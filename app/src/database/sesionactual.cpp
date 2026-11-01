@@ -1,4 +1,5 @@
 #include "sesionactual.h"
+#include "databasemanager.h"
 
 SesionActual &SesionActual::instance() {
     static SesionActual sesion;
@@ -13,6 +14,10 @@ void SesionActual::iniciar(int idUsuario, const QString &nombreUsuario, const QS
     m_idEmpleado = idEmpleado;
     m_idSucursal = idSucursal;
     m_nombreSucursal = nombreSucursal;
+}
+
+bool SesionActual::veTodasLasSucursales() const {
+    return esAdmin() && !DatabaseManager::esSucursal();
 }
 
 void SesionActual::cerrar() {

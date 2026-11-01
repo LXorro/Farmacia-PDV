@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QDialog>
+#include <QString>
 
 namespace Ui {
 class LoginDialog;
@@ -17,5 +18,7 @@ private slots:
     void abrirRegistro();
 
 private:
+    bool validarEquipo(const QString &rol, int idEmpleado, int &idSucursal, QString &nombreSucursal, QString &motivo);
+
     Ui::LoginDialog *ui;
 };

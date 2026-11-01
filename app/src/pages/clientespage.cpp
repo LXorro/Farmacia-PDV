@@ -50,7 +50,7 @@ void ClientesPage::refrescar() {
         "FROM Clientes c "
         "JOIN Sucursales s ON s.id_sucursal = c.id_sucursal ";
 
-    if (!SesionActual::instance().esAdmin())
+    if (!SesionActual::instance().veTodasLasSucursales())
         sql += QString("WHERE c.id_sucursal = %1 ").arg(SesionActual::instance().idSucursal());
 
     sql += "ORDER BY c.nombre";

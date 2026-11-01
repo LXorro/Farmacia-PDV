@@ -3,6 +3,7 @@
 #include "../util/iconos.h"
 #include "../util/tablas.h"
 #include "../dialogs/categoriadialog.h"
+#include "../database/databasemanager.h"
 #include "../database/sesionactual.h"
 
 #include <QHeaderView>
@@ -44,7 +45,7 @@ CategoriasPage::CategoriasPage(QWidget *parent) : QWidget(parent), ui(new Ui::Ca
     ui->btnRefrescar->setIcon(Iconos::refrescar());
 
     // Categorías es catálogo maestro: solo el admin (central) lo edita.
-    if (!SesionActual::instance().esAdmin()) {
+    if (!SesionActual::instance().esAdmin() || DatabaseManager::esSucursal()) {
         ui->btnNuevo->setEnabled(false);
         ui->btnEditar->setEnabled(false);
         ui->btnEliminar->setEnabled(false);

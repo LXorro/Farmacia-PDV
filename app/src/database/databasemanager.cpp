@@ -51,3 +51,67 @@ void DatabaseManager::guardarCredenciales(const QString &host, int puerto, const
     ajustes.setValue("db/usuario", usuario);
     ajustes.setValue("db/contrasena", contrasena);
 }
+
+DatabaseManager::Funcion DatabaseManager::funcion() {
+    const QString valor = QSettings().value("nodo/funcion", "unico").toString();
+    if (valor == "central")
+        return Funcion::Central;
+    return valor == "sucursal" ? Funcion::Sucursal : Funcion::Unico;
+}
+
+void DatabaseManager::guardarFuncion(Funcion funcion, const QString &hostCentral, int puertoCentral) {
+    QSettings ajustes;
+    ajustes.setValue("nodo/funcion", funcion == Funcion::Central ? "central"
+                                     : funcion == Funcion::Sucursal ? "sucursal" : "unico");
+    ajustes.setValue("central/host", hostCentral);
+    ajustes.setValue("central/puerto", puertoCentral);
+}
+
+int DatabaseManager::idSucursalNodo() {
+    return QSettings().value("nodo/id_sucursal", -1).toInt();
+}
+
+void DatabaseManager::guardarSucursalNodo(int idSucursal) {
+    QSettings().setValue("nodo/id_sucursal", idSucursal);
+}
+
+static const char *kConexionCentral = "central";
+
+QSqlDatabase DatabaseManager::dbUsuarios() const {
+    return esSucursal() ? QSqlDatabase::database(kConexionCentral, false) : QSqlDatabase::database();
+}
+
+bool DatabaseManager::centralConectado() const {
+    if (!esSucursal())
+        return true;
+    QSqlDatabase base = QSqlDatabase::database(kConexionCentral, false);
+    if (!base.isValid() || !base.isOpen())
+        return false;
+    QSqlQuery ping(base);
+    return ping.exec("SELECT 1");
+}
+
+bool DatabaseManager::conectarCentral(const QString &contrasena) {
+    if (!esSucursal())
+        return true;
+    if (centralConectado())
+        return true;
+
+    QSettings ajustes;
+    QSqlDatabase base = QSqlDatabase::contains(kConexionCentral) ? QSqlDatabase::database(kConexionCentral, false)
+                                                                  : QSqlDatabase::addDatabase("QMYSQL", kConexionCentral);
+    if (base.isOpen())
+        base.close();
+    base.setHostName(ajustes.value("central/host").toString());
+    base.setPort(ajustes.value("central/puerto", DbConfig::kPort).toInt());
+    base.setDatabaseName(DbConfig::kDatabase);
+    base.setUserName(DbConfig::kUsuarioRemoto);
+    base.setPassword(contrasena);
+    // Sin conexión no debe congelar la ventana.
+    base.setConnectOptions("MYSQL_OPT_CONNECT_TIMEOUT=5");
+    if (!base.open()) {
+        m_lastError = base.lastError().text();
+        return false;
+    }
+    return true;
+}

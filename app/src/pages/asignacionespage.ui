@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AsignacionesPage</class>
+ <widget class="QWidget" name="AsignacionesPage">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>700</width><height>420</height></rect>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="labelAyuda">
+     <property name="wordWrap"><bool>true</bool></property>
+     <property name="text"><string>Autoriza a un empleado a operar en otra sucursal durante un periodo. Solo podrá aprovecharlo iniciando sesión en un equipo de esa sucursal.</string></property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="botonesLayout">
+     <item><widget class="QPushButton" name="btnNuevo"><property name="text"><string>Nueva asignación</string></property></widget></item>
+     <item><widget class="QPushButton" name="btnRevocar"><property name="text"><string>Revocar</string></property></widget></item>
+     <item><spacer name="spacer"><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+     <item><widget class="QPushButton" name="btnRefrescar"><property name="text"><string>Refrescar</string></property></widget></item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTableView" name="tableView"/>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

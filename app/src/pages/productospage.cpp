@@ -3,6 +3,7 @@
 #include "../util/iconos.h"
 #include "../util/tablas.h"
 #include "../dialogs/productodialog.h"
+#include "../database/databasemanager.h"
 #include "../database/sesionactual.h"
 
 #include <QHeaderView>
@@ -36,7 +37,7 @@ ProductosPage::ProductosPage(QWidget *parent) : QWidget(parent), ui(new Ui::Prod
     ui->btnRefrescar->setIcon(Iconos::refrescar());
 
     // Productos es catálogo maestro: solo el admin (central) lo edita.
-    if (!SesionActual::instance().esAdmin()) {
+    if (!SesionActual::instance().esAdmin() || DatabaseManager::esSucursal()) {
         ui->btnNuevo->setEnabled(false);
         ui->btnEditar->setEnabled(false);
         ui->btnEliminar->setEnabled(false);
@@ -53,7 +54,7 @@ void ProductosPage::refrescar() {
     // Existencias y disponibilidad se derivan de Lotes (no vencidos); un empleado
     // solo ve las de su sucursal, el admin el total.
     QString filtroSucursal;
-    if (!SesionActual::instance().esAdmin())
+    if (!SesionActual::instance().veTodasLasSucursales())
         filtroSucursal = QString("AND l.id_sucursal = %1 ").arg(SesionActual::instance().idSucursal());
 
     const QString existencias = QString(

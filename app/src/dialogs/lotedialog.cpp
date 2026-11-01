@@ -17,7 +17,7 @@ LoteDialog::LoteDialog(QWidget *parent) : QDialog(parent), ui(new Ui::LoteDialog
     cargarCombos();
     actualizarEstado();
 
-    if (!SesionActual::instance().esAdmin()) {
+    if (!SesionActual::instance().veTodasLasSucursales()) {
         int idx = ui->comboSucursal->findData(SesionActual::instance().idSucursal());
         if (idx >= 0)
             ui->comboSucursal->setCurrentIndex(idx);

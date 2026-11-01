@@ -12,6 +12,9 @@ public:
 
     bool activa() const { return m_idUsuario >= 0; }
     bool esAdmin() const { return m_rol == "admin"; }
+    // Alcance de datos: un admin ve todas las sucursales salvo en el equipo de una sucursal,
+    // donde solo existe (y se opera) la propia.
+    bool veTodasLasSucursales() const;
 
     int idUsuario() const { return m_idUsuario; }
     QString nombreUsuario() const { return m_nombreUsuario; }

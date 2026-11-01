@@ -64,7 +64,7 @@ void InicioPage::refrescar() {
 
 void InicioPage::cargarEstadisticas() {
     const SesionActual &sesion = SesionActual::instance();
-    QString filtroSucursal = sesion.esAdmin() ? "" : QString("AND id_sucursal = %1").arg(sesion.idSucursal());
+    QString filtroSucursal = sesion.veTodasLasSucursales() ? "" : QString("AND id_sucursal = %1").arg(sesion.idSucursal());
 
     QSqlQuery ventasHoy;
     ventasHoy.exec(QString(
@@ -82,7 +82,7 @@ void InicioPage::cargarEstadisticas() {
     if (pendientes.next())
         ui->labelPendientes->setText(pendientes.value(0).toString());
 
-    QString filtroSucursalLotes = sesion.esAdmin() ? "" : QString("AND id_sucursal = %1").arg(sesion.idSucursal());
+    QString filtroSucursalLotes = sesion.veTodasLasSucursales() ? "" : QString("AND id_sucursal = %1").arg(sesion.idSucursal());
     QSqlQuery caducidad;
     caducidad.exec(QString(
         "SELECT COUNT(*) FROM Lotes "

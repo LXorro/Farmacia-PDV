@@ -5,12 +5,12 @@
   <property name="geometry">
    <rect><x>0</x><y>0</y><width>400</width><height>300</height></rect>
   </property>
-  <property name="windowTitle"><string>Registrar usuario</string></property>
+  <property name="windowTitle"><string>Crear administrador inicial</string></property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QLabel" name="labelAyuda">
      <property name="wordWrap"><bool>true</bool></property>
-     <property name="text"><string>Cada cuenta corresponde a un empleado existente. El primer usuario que se registre en el sistema queda como administrador; los siguientes, como empleados.</string></property>
+     <property name="text"><string>Aún no hay usuarios en el sistema. Esta cuenta será el administrador inicial: desde ahí podrás dar de alta sucursales, empleados y las demás cuentas.</string></property>
     </widget>
    </item>
    <item>

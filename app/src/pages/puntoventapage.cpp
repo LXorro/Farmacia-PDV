@@ -50,7 +50,7 @@ void PuntoVentaPage::refrescar() {
 
 void PuntoVentaPage::cargarSucursales() {
     int idPrevio = ui->comboSucursal->currentData().toInt();
-    bool esAdmin = SesionActual::instance().esAdmin();
+    bool esAdmin = SesionActual::instance().veTodasLasSucursales();
 
     ui->comboSucursal->blockSignals(true);
     ui->comboSucursal->clear();
@@ -82,9 +82,11 @@ void PuntoVentaPage::alCambiarSucursal() {
 void PuntoVentaPage::cargarEmpleados(int idSucursal) {
     ui->comboEmpleado->clear();
     QSqlQuery query;
+    // Personal de la sucursal más quien opera (puede ser un empleado con asignación temporal).
     query.prepare("SELECT id_empleado, nombre, apellido_paterno FROM Empleados "
-                  "WHERE id_sucursal = :suc AND estado = 'activo' ORDER BY nombre");
+                  "WHERE (id_sucursal = :suc OR id_empleado = :yo) AND estado = 'activo' ORDER BY nombre");
     query.bindValue(":suc", idSucursal);
+    query.bindValue(":yo", SesionActual::instance().idEmpleado());
     query.exec();
     while (query.next())
         ui->comboEmpleado->addItem(query.value(1).toString() + " " + query.value(2).toString(), query.value(0));

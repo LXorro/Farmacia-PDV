@@ -8,4 +8,6 @@ constexpr auto kHost     = "127.0.0.1";
 constexpr int  kPort     = 3306;
 constexpr auto kDatabase = "farmacia";
 constexpr auto kUser     = "farmacia_app";
+// Cuenta del central con la que un admin de una sucursal administra Usuarios (sin guardar su contraseña).
+constexpr auto kUsuarioRemoto = "farmacia_remoto";
 }

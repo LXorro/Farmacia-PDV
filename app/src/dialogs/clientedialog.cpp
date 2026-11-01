@@ -1,5 +1,6 @@
 #include "clientedialog.h"
 #include "ui_clientedialog.h"
+#include "../database/sesionactual.h"
 
 #include <QMessageBox>
 #include <QSqlError>
@@ -19,6 +20,11 @@ void ClienteDialog::cargarCombos() {
     QSqlQuery sucursales("SELECT id_sucursal, nombre FROM Sucursales ORDER BY nombre");
     while (sucursales.next())
         ui->comboSucursal->addItem(sucursales.value(1).toString(), sucursales.value(0));
+
+    if (!SesionActual::instance().veTodasLasSucursales()) {
+        ui->comboSucursal->setCurrentIndex(ui->comboSucursal->findData(SesionActual::instance().idSucursal()));
+        ui->comboSucursal->setEnabled(false);
+    }
 }
 
 void ClienteDialog::setClienteId(int id) {

@@ -1,5 +1,6 @@
 #include "ticketdetalledialog.h"
 #include "ui_ticketdetalledialog.h"
+#include "../database/databasemanager.h"
 #include "devoluciondialog.h"
 #include "../util/iconos.h"
 #include "../util/tablas.h"
@@ -39,6 +40,12 @@ TicketDetalleDialog::TicketDetalleDialog(QWidget *parent) : QDialog(parent), ui(
 
     connect(ui->btnRegistrarAbono, &QPushButton::clicked, this, &TicketDetalleDialog::registrarAbono);
     connect(ui->btnRegistrarDevolucion, &QPushButton::clicked, this, &TicketDetalleDialog::registrarDevolucion);
+
+    // El central consulta lo que venden las sucursales, no registra abonos ni devoluciones por ellas.
+    if (DatabaseManager::funcion() == DatabaseManager::Funcion::Central) {
+        ui->btnRegistrarAbono->setEnabled(false);
+        ui->btnRegistrarDevolucion->setEnabled(false);
+    }
 
     ui->btnRegistrarAbono->setIcon(Iconos::nuevo());
     ui->btnRegistrarDevolucion->setIcon(Iconos::cancelar());

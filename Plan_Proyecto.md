@@ -12,13 +12,15 @@ No todo empleado tiene acceso al sistema, así que el login vive en su propia ta
 
 | Pantalla | Empleado | Admin |
 |---|---|---|
-| Punto de Venta, Clientes, Tickets, Inventario | solo su sucursal (combo bloqueado/filtrado) | todas |
+| Punto de Venta, Clientes, Tickets, Inventario | solo su sucursal (combo bloqueado/filtrado) | todas (el equipo central no vende: solo consulta) |
 | Productos, Categorías | solo lectura (catálogo maestro = central) | CRUD |
 | Proveedores, Empleados, Sucursales, Usuarios | oculto | CRUD |
 
-El primer usuario que se registra queda **admin** automáticamente (bootstrap); los siguientes quedan `empleado` por defecto, y un admin puede promoverlos después desde la pantalla de Usuarios.
+No hay registro libre: solo si la tabla `Usuarios` está vacía, el login ofrece crear el **administrador inicial** (sin empleado ligado). Las demás cuentas las crea un admin desde la pantalla de Usuarios; desde una sucursal, conectándose al central (cuenta `farmacia_remoto`, ver `db/distribuido/autonomia/README.md`).
 
 **Importante:** la restricción por rol es solo de **alcance** (sucursal, catálogo maestro), no de **autoría**. Cualquier empleado de una sucursal puede ver, cobrar, abonar o devolver tickets/ventas que haya atendido **otro** empleado de esa misma sucursal — `TicketsPage` filtra por `id_sucursal`, no por `id_empleado`, y los combos de "empleado que atiende" en Punto de Venta y en devoluciones listan a todo el personal activo de la sucursal (preseleccionan al usuario logueado por comodidad, pero se puede cambiar). Esto refleja que el sistema modela personal compartiendo una caja/turno, no cuentas aisladas entre sí.
+
+**Autonomía y propiedad de datos:** cada equipo tiene una función (único, central o sucursal) y la base solo permite escribir cada tabla desde un nodo (ver `db/distribuido/autonomia/README.md`). Un empleado puede operar en otra sucursal con una *asignación temporal* autorizada por un admin, pero solo iniciando sesión en un equipo de esa sucursal.
 
 - **Motor:** MySQL/MariaDB. Cubre igual los tres temas: particionamiento nativo (`PARTITION BY LIST/RANGE/HASH`), replicación integrada (master-slave nativa; Galera Cluster en MariaDB si se quiere multi-maestro), y transacciones distribuidas vía **XA Transactions** (`XA START`/`XA END`/`XA PREPARE`/`XA COMMIT`) como equivalente de 2PC.
 - **Cliente/UI:** Qt (C++), conectado a la base vía `QSqlDatabase` (driver `QMYSQL`).

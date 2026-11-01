@@ -56,6 +56,9 @@ add_executable(FarmaciaApp
     src/pages/ticketspage.h
     src/pages/ticketspage.cpp
     src/pages/ticketspage.ui
+    src/pages/asignacionespage.h
+    src/pages/asignacionespage.cpp
+    src/pages/asignacionespage.ui
     src/pages/usuariospage.h
     src/pages/usuariospage.cpp
     src/pages/usuariospage.ui
@@ -89,6 +92,9 @@ add_executable(FarmaciaApp
     src/dialogs/configurarbddialog.h
     src/dialogs/configurarbddialog.cpp
     src/dialogs/configurarbddialog.ui
+    src/dialogs/asignaciondialog.h
+    src/dialogs/asignaciondialog.cpp
+    src/dialogs/asignaciondialog.ui
     src/dialogs/logindialog.h
     src/dialogs/logindialog.cpp
     src/dialogs/logindialog.ui

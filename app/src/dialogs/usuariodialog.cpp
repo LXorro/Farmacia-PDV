@@ -1,5 +1,6 @@
 #include "usuariodialog.h"
 #include "ui_usuariodialog.h"
+#include "../database/databasemanager.h"
 #include "../util/passwordutil.h"
 
 #include <QMessageBox>
@@ -18,7 +19,7 @@ UsuarioDialog::~UsuarioDialog() {
 
 void UsuarioDialog::cargarCombos() {
     ui->comboEmpleado->clear();
-    QSqlQuery query;
+    QSqlQuery query(DatabaseManager::instance().dbUsuarios());
     query.prepare(
         "SELECT e.id_empleado, e.nombre, e.apellido_paterno, s.nombre "
         "FROM Empleados e "
@@ -43,7 +44,7 @@ void UsuarioDialog::cargarUsuario() {
     if (m_idUsuario < 0)
         return;
 
-    QSqlQuery query;
+    QSqlQuery query(DatabaseManager::instance().dbUsuarios());
     query.prepare("SELECT id_empleado, nombre_usuario, rol, estado FROM Usuarios WHERE id_usuario = :id");
     query.bindValue(":id", m_idUsuario);
     if (!query.exec() || !query.next())
@@ -74,7 +75,7 @@ void UsuarioDialog::guardar() {
         return;
     }
 
-    QSqlQuery query;
+    QSqlQuery query(DatabaseManager::instance().dbUsuarios());
     if (m_idUsuario < 0) {
         QString sal = PasswordUtil::generarSal();
         QString hash = PasswordUtil::hashear(contrasena, sal);

@@ -218,6 +218,26 @@ CREATE TABLE Usuarios (
     CONSTRAINT fk_usuarios_empleado FOREIGN KEY (id_empleado) REFERENCES Empleados(id_empleado)
 ) ENGINE=InnoDB;
 
+-- ---------------------------------------------------------------------
+-- Asignaciones temporales: un admin autoriza a un empleado a operar en OTRA
+-- sucursal durante un periodo. Se captura en el central y baja a las sucursales;
+-- el empleado solo puede aprovecharla iniciando sesión en un equipo de esa
+-- sucursal (así sus ventas quedan en el fragmento de la sucursal que opera).
+-- ---------------------------------------------------------------------
+CREATE TABLE Asignaciones_Temporales (
+    id_asignacion   INT AUTO_INCREMENT PRIMARY KEY,
+    id_empleado     INT NOT NULL,
+    id_sucursal     INT NOT NULL,
+    fecha_inicio    DATE NOT NULL,
+    fecha_fin       DATE NOT NULL,
+    id_autoriza     INT NULL,
+    estado          ENUM('aprobada', 'revocada') NOT NULL DEFAULT 'aprobada',
+    fecha_creacion  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_asig_empleado  FOREIGN KEY (id_empleado)  REFERENCES Empleados(id_empleado),
+    CONSTRAINT fk_asig_sucursal  FOREIGN KEY (id_sucursal)  REFERENCES Sucursales(id_sucursal),
+    CONSTRAINT fk_asig_autoriza  FOREIGN KEY (id_autoriza)  REFERENCES Usuarios(id_usuario) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- =====================================================================

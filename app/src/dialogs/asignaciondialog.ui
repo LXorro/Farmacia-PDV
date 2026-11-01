@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AsignacionDialog</class>
+ <widget class="QDialog" name="AsignacionDialog">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>420</width><height>260</height></rect>
+  </property>
+  <property name="windowTitle"><string>Asignación temporal</string></property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="labelEmpleado"><property name="text"><string>Empleado:</string></property></widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="comboEmpleado"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelSucursal"><property name="text"><string>Podrá operar en:</string></property></widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="comboSucursal"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelDesde"><property name="text"><string>Desde:</string></property></widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QDateEdit" name="dateDesde">
+       <property name="calendarPopup"><bool>true</bool></property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelHasta"><property name="text"><string>Hasta:</string></property></widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QDateEdit" name="dateHasta">
+       <property name="calendarPopup"><bool>true</bool></property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation"><enum>Qt::Horizontal</enum></property>
+     <property name="standardButtons"><set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set></property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>AsignacionDialog</receiver>
+   <slot>reject()</slot>
+  </connection>
+ </connections>
+</ui>

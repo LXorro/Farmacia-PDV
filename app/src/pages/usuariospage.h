@@ -23,6 +23,9 @@ private slots:
     void eliminarUsuario();
 
 private:
+    // En una sucursal las cuentas se administran en el central: pide su contraseña si hace falta.
+    bool asegurarConexion();
+
     QSqlQueryModel *m_model;
     Ui::UsuariosPage *ui;
 };

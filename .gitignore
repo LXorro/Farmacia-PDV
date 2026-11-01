@@ -27,3 +27,6 @@ Thumbs.db
 # --- Temporales ---
 *.tmp
 *.bak
+
+# --- Demo de autonomía local: nodos MariaDB generados por db/distribuido/autonomia/demo.sh ---
+db/distribuido/autonomia/nodos/
