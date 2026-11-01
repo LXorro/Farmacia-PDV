@@ -107,8 +107,9 @@ bool DatabaseManager::conectarCentral(const QString &contrasena) {
     base.setDatabaseName(DbConfig::kDatabase);
     base.setUserName(DbConfig::kUsuarioRemoto);
     base.setPassword(contrasena);
-    // Sin conexión no debe congelar la ventana.
-    base.setConnectOptions("MYSQL_OPT_CONNECT_TIMEOUT=5");
+    // Sin conexión no debe congelar la ventana. SSL_MODE_REQUIRED: cifra la conexión sin
+    // exigir que el certificado del central esté firmado por una CA conocida (autofirmado).
+    base.setConnectOptions("MYSQL_OPT_CONNECT_TIMEOUT=5;MYSQL_OPT_SSL_MODE=SSL_MODE_REQUIRED");
     if (!base.open()) {
         m_lastError = base.lastError().text();
         return false;
