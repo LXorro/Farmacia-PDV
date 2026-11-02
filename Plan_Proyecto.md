@@ -20,7 +20,7 @@ No hay registro libre: solo si la tabla `Usuarios` está vacía, el login ofrece
 
 **Importante:** la restricción por rol es solo de **alcance** (sucursal, catálogo maestro), no de **autoría**. Cualquier empleado de una sucursal puede ver, cobrar, abonar o devolver tickets/ventas que haya atendido **otro** empleado de esa misma sucursal — `TicketsPage` filtra por `id_sucursal`, no por `id_empleado`, y los combos de "empleado que atiende" en Punto de Venta y en devoluciones listan a todo el personal activo de la sucursal (preseleccionan al usuario logueado por comodidad, pero se puede cambiar). Esto refleja que el sistema modela personal compartiendo una caja/turno, no cuentas aisladas entre sí.
 
-**Autonomía y propiedad de datos:** cada equipo tiene una función (único, central o sucursal) y la base solo permite escribir cada tabla desde un nodo (ver `db/distribuido/autonomia/README.md`). Un empleado puede operar en otra sucursal con una *asignación temporal* autorizada por un admin, pero solo iniciando sesión en un equipo de esa sucursal.
+**Autonomía y propiedad de datos:** el modo ya no es una propiedad del equipo sino de la sesión (un empleado trabaja sobre la base local de su sucursal; un administrador, al iniciar sesión, se conecta al central y ve todas las sucursales; sin central el equipo es único) y la base solo permite escribir cada tabla desde un nodo (ver `db/distribuido/autonomia/README.md`). Un empleado puede operar en otra sucursal con una *asignación temporal* autorizada por un admin, pero solo iniciando sesión en un equipo de esa sucursal.
 
 - **Motor:** MySQL/MariaDB. Cubre igual los tres temas: particionamiento nativo (`PARTITION BY LIST/RANGE/HASH`), replicación integrada (master-slave nativa; Galera Cluster en MariaDB si se quiere multi-maestro), y transacciones distribuidas vía **XA Transactions** (`XA START`/`XA END`/`XA PREPARE`/`XA COMMIT`) como equivalente de 2PC.
 - **Cliente/UI:** Qt (C++), conectado a la base vía `QSqlDatabase` (driver `QMYSQL`).
@@ -58,6 +58,12 @@ Farmacia, tal como está en `Farmacia_actualizado.md`, es un esquema de una sola
   - `src/database/databasemanager.{h,cpp}` + `src/database/dbconfig.h` — conexión a MariaDB vía `QMYSQL`. `dbconfig.h` solo trae host/puerto/base por defecto; el usuario y la contraseña (aleatoria) los genera el asistente de primer arranque (`src/dialogs/configurarbddialog.*` + `src/database/dbinicializador.*`) con una cuenta administradora usada una sola vez, y se guardan con `QSettings`. El asistente corre el `db/schema.sql` embebido en los recursos del ejecutable y no toca los datos si las tablas ya existen.
   - Compila limpio con `cmake -B build && cmake --build build` (Qt6, verificado en este entorno).
 - **Cargado y probado en vivo** (2026-10-01 a 2026-10-04): esquema y datos de ejemplo cargados en MariaDB; la app Qt arrancó contra la base real y se registró una venta genuina desde la interfaz (Ticket #2, sucursal Norte) con subtotal/stock/estado de pago sincronizados correctamente por los triggers. El flujo de devolución (inserción + reintegro de stock) se verificó con la consulta exacta del diálogo. El bootstrap de login (primer registro → admin, siguientes → empleado) se verificó replicando la consulta exacta de `RegistroDialog`/`LoginDialog` contra la base real.
+
+### Reparto de datos: qué decide el central y qué la sucursal
+
+- **Central (admin, baja a las sucursales):** Sucursales, Empleados, Usuarios, Asignaciones, Categorías, Proveedores y Productos (identidad del producto + **precio sugerido**).
+- **Sucursal (empleados, sube al central):** Clientes, Lotes (con su **costo unitario**: cada compra cuesta distinto), Inventario, Tickets, Ventas, Pagos, Devoluciones y **`Productos_Sucursal`** (precio propio, si la sucursal maneja el producto y su mínimo de existencias). Sin fila, se vende al precio sugerido. `Ventas.precio_unitario` guarda lo cobrado, así que cambiar un precio no altera tickets viejos.
+- El catálogo es único porque `codigo_barras` es único: con varios escritores dos sucursales podrían crear el mismo código a la vez. Migración de bases existentes: `db/migraciones/002_precios_por_sucursal.sql`.
 
 ## 4. Demo de BD distribuidas — implementada y verificada (`db/distribuido/`)
 

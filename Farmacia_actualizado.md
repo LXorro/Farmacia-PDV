@@ -11,8 +11,7 @@
 | codigo_barras | VARCHAR(50) | Código de barras |
 | id_categoria | INT (FK) | Categoría del producto |
 | id_proveedor | INT (FK) | Proveedor del producto |
-| precio_compra | DECIMAL(10,2) | Precio de compra |
-| precio_venta | DECIMAL(10,2) | Precio de venta |
+| precio_sugerido | DECIMAL(10,2) | Precio de venta sugerido (cada sucursal puede fijar el suyo en `Productos_Sucursal`) |
 | requiere_receta | BOOLEAN | Indica si el producto requiere receta médica |
 | estado | VARCHAR(20) | Estado del producto en catálogo: activo o descontinuado (agotado/caducado se derivan de `Lotes`) |
 

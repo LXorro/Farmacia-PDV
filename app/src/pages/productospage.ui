@@ -35,6 +35,11 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="btnPrecioSucursal">
+       <property name="text"><string>Precio en mi sucursal</string></property>
+      </widget>
+     </item>
+     <item>
       <spacer name="spacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>

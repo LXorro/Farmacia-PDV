@@ -81,30 +81,13 @@
       <widget class="QComboBox" name="comboProveedor"/>
      </item>
      <item row="6" column="0">
-      <widget class="QLabel" name="labelPrecioCompra">
+      <widget class="QLabel" name="labelPrecioVenta">
        <property name="text">
-        <string>Precio de compra:</string>
+        <string>Precio sugerido:</string>
        </property>
       </widget>
      </item>
      <item row="6" column="1">
-      <widget class="QDoubleSpinBox" name="spinPrecioCompra">
-       <property name="maximum">
-        <double>999999.000000000</double>
-       </property>
-       <property name="decimals">
-        <number>2</number>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="0">
-      <widget class="QLabel" name="labelPrecioVenta">
-       <property name="text">
-        <string>Precio de venta:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="1">
       <widget class="QDoubleSpinBox" name="spinPrecioVenta">
        <property name="maximum">
         <double>999999.000000000</double>
@@ -114,21 +97,21 @@
        </property>
       </widget>
      </item>
-     <item row="8" column="1">
+     <item row="7" column="1">
       <widget class="QCheckBox" name="checkRequiereReceta">
        <property name="text">
         <string>Requiere receta médica</string>
        </property>
       </widget>
      </item>
-     <item row="9" column="0">
+     <item row="8" column="0">
       <widget class="QLabel" name="labelEstado">
        <property name="text">
         <string>Estado:</string>
        </property>
       </widget>
      </item>
-     <item row="9" column="1">
+     <item row="8" column="1">
       <widget class="QComboBox" name="comboEstado">
        <item>
         <property name="text">

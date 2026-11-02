@@ -36,7 +36,7 @@ void ProductoDialog::cargarProducto() {
 
     QSqlQuery query;
     query.prepare("SELECT nombre, marca, descripcion, codigo_barras, id_categoria, id_proveedor, "
-                  "precio_compra, precio_venta, requiere_receta, estado "
+                  "precio_sugerido, requiere_receta, estado "
                   "FROM Productos WHERE id_producto = :id");
     query.bindValue(":id", m_idProducto);
     if (!query.exec() || !query.next())
@@ -48,10 +48,9 @@ void ProductoDialog::cargarProducto() {
     ui->lineCodigoBarras->setText(query.value(3).toString());
     ui->comboCategoria->setCurrentIndex(ui->comboCategoria->findData(query.value(4)));
     ui->comboProveedor->setCurrentIndex(ui->comboProveedor->findData(query.value(5)));
-    ui->spinPrecioCompra->setValue(query.value(6).toDouble());
-    ui->spinPrecioVenta->setValue(query.value(7).toDouble());
-    ui->checkRequiereReceta->setChecked(query.value(8).toBool());
-    ui->comboEstado->setCurrentText(query.value(9).toString());
+    ui->spinPrecioVenta->setValue(query.value(6).toDouble());
+    ui->checkRequiereReceta->setChecked(query.value(7).toBool());
+    ui->comboEstado->setCurrentText(query.value(8).toString());
 }
 
 void ProductoDialog::guardar() {
@@ -64,14 +63,14 @@ void ProductoDialog::guardar() {
     if (m_idProducto < 0) {
         query.prepare(
             "INSERT INTO Productos (nombre, marca, descripcion, codigo_barras, id_categoria, "
-            "id_proveedor, precio_compra, precio_venta, requiere_receta, estado) "
+            "id_proveedor, precio_sugerido, requiere_receta, estado) "
             "VALUES (:nombre, :marca, :descripcion, :codigo, :categoria, :proveedor, "
-            ":pcompra, :pventa, :receta, :estado)");
+            ":pventa, :receta, :estado)");
     } else {
         query.prepare(
             "UPDATE Productos SET nombre = :nombre, marca = :marca, descripcion = :descripcion, "
             "codigo_barras = :codigo, id_categoria = :categoria, id_proveedor = :proveedor, "
-            "precio_compra = :pcompra, precio_venta = :pventa, requiere_receta = :receta, "
+            "precio_sugerido = :pventa, requiere_receta = :receta, "
             "estado = :estado WHERE id_producto = :id");
         query.bindValue(":id", m_idProducto);
     }
@@ -84,7 +83,6 @@ void ProductoDialog::guardar() {
     query.bindValue(":codigo", codigo.isEmpty() ? QVariant(QMetaType(QMetaType::QString)) : QVariant(codigo));
     query.bindValue(":categoria", ui->comboCategoria->currentData());
     query.bindValue(":proveedor", ui->comboProveedor->currentData());
-    query.bindValue(":pcompra", ui->spinPrecioCompra->value());
     query.bindValue(":pventa", ui->spinPrecioVenta->value());
     query.bindValue(":receta", ui->checkRequiereReceta->isChecked());
     query.bindValue(":estado", ui->comboEstado->currentText());

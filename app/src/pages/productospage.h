@@ -21,6 +21,7 @@ private slots:
     void nuevoProducto();
     void editarProducto();
     void eliminarProducto();
+    void precioEnSucursal();
 
 private:
     QSqlQueryModel *m_model;

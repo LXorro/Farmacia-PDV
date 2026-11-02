@@ -52,19 +52,28 @@ void DatabaseManager::guardarCredenciales(const QString &host, int puerto, const
     ajustes.setValue("db/contrasena", contrasena);
 }
 
+static DatabaseManager::Funcion g_modoSesion = DatabaseManager::Funcion::Sucursal;
+
 DatabaseManager::Funcion DatabaseManager::funcion() {
-    const QString valor = QSettings().value("nodo/funcion", "unico").toString();
-    if (valor == "central")
-        return Funcion::Central;
-    return valor == "sucursal" ? Funcion::Sucursal : Funcion::Unico;
+    return hayCentral() ? g_modoSesion : Funcion::Unico;
 }
 
-void DatabaseManager::guardarFuncion(Funcion funcion, const QString &hostCentral, int puertoCentral) {
+bool DatabaseManager::hayCentral() {
+    return !hostCentral().isEmpty();
+}
+
+QString DatabaseManager::hostCentral() {
+    return QSettings().value("central/host").toString().trimmed();
+}
+
+int DatabaseManager::puertoCentral() {
+    return QSettings().value("central/puerto", DbConfig::kPort).toInt();
+}
+
+void DatabaseManager::guardarCentral(const QString &host, int puerto) {
     QSettings ajustes;
-    ajustes.setValue("nodo/funcion", funcion == Funcion::Central ? "central"
-                                     : funcion == Funcion::Sucursal ? "sucursal" : "unico");
-    ajustes.setValue("central/host", hostCentral);
-    ajustes.setValue("central/puerto", puertoCentral);
+    ajustes.setValue("central/host", host);
+    ajustes.setValue("central/puerto", puerto);
 }
 
 int DatabaseManager::idSucursalNodo() {
@@ -83,7 +92,7 @@ QSqlDatabase DatabaseManager::dbUsuarios() const {
 
 bool DatabaseManager::centralConectado() const {
     if (!esSucursal())
-        return true;
+        return true;  // Único/Central: la conexión por defecto ya es la que cuenta
     QSqlDatabase base = QSqlDatabase::database(kConexionCentral, false);
     if (!base.isValid() || !base.isOpen())
         return false;
@@ -92,7 +101,7 @@ bool DatabaseManager::centralConectado() const {
 }
 
 bool DatabaseManager::conectarCentral(const QString &contrasena) {
-    if (!esSucursal())
+    if (!hayCentral() || funcion() == Funcion::Central)
         return true;
     if (centralConectado())
         return true;
@@ -102,8 +111,8 @@ bool DatabaseManager::conectarCentral(const QString &contrasena) {
                                                                   : QSqlDatabase::addDatabase("QMYSQL", kConexionCentral);
     if (base.isOpen())
         base.close();
-    base.setHostName(ajustes.value("central/host").toString());
-    base.setPort(ajustes.value("central/puerto", DbConfig::kPort).toInt());
+    base.setHostName(hostCentral());
+    base.setPort(puertoCentral());
     base.setDatabaseName(DbConfig::kDatabase);
     base.setUserName(DbConfig::kUsuarioRemoto);
     base.setPassword(contrasena);
@@ -114,5 +123,39 @@ bool DatabaseManager::conectarCentral(const QString &contrasena) {
         m_lastError = base.lastError().text();
         return false;
     }
+    return true;
+}
+
+bool DatabaseManager::activarModoCentral() {
+    if (funcion() == Funcion::Central)
+        return true;
+    if (!hayCentral() || !centralConectado())
+        return false;
+
+    // Se conserva la local como "local" por si hay que volver atrás.
+    {
+        QSqlDatabase local = QSqlDatabase::cloneDatabase(QSqlDatabase::database(), "local");
+        if (!local.open()) {
+            m_lastError = local.lastError().text();
+            return false;
+        }
+    }
+    QSqlDatabase::removeDatabase(QSqlDatabase::defaultConnection);
+    bool ok = false;
+    {
+        QSqlDatabase nueva = QSqlDatabase::cloneDatabase(QSqlDatabase::database(kConexionCentral, false),
+                                                         QSqlDatabase::defaultConnection);
+        ok = nueva.open();
+        if (!ok)
+            m_lastError = nueva.lastError().text();
+    }
+    if (!ok) {
+        QSqlDatabase::removeDatabase(QSqlDatabase::defaultConnection);
+        QSqlDatabase restaurada = QSqlDatabase::cloneDatabase(QSqlDatabase::database("local", false),
+                                                              QSqlDatabase::defaultConnection);
+        restaurada.open();
+        return false;
+    }
+    g_modoSesion = Funcion::Central;
     return true;
 }

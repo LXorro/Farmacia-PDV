@@ -164,16 +164,16 @@ cmd_prueba() {
     esperar central "SELECT SUM(cantidad_disponible) FROM farmacia.Lotes WHERE id_producto=1" 185 "stock consolidado (200-5-3-2-4-1)" || fallos=$((fallos+1))
 
     echo "4) Catálogo: central -> sucursales"
-    sql central -e "UPDATE farmacia.Productos SET precio_venta = 30.00 WHERE id_producto = 1;"
-    esperar norte "SELECT precio_venta FROM farmacia.Productos WHERE id_producto=1" 30.00 "nuevo precio llegó a norte" || fallos=$((fallos+1))
-    esperar sur   "SELECT precio_venta FROM farmacia.Productos WHERE id_producto=1" 30.00 "nuevo precio llegó a sur" || fallos=$((fallos+1))
+    sql central -e "UPDATE farmacia.Productos SET precio_sugerido = 30.00 WHERE id_producto = 1;"
+    esperar norte "SELECT precio_sugerido FROM farmacia.Productos WHERE id_producto=1" 30.00 "nuevo precio llegó a norte" || fallos=$((fallos+1))
+    esperar sur   "SELECT precio_sugerido FROM farmacia.Productos WHERE id_producto=1" 30.00 "nuevo precio llegó a sur" || fallos=$((fallos+1))
 
     echo "5) Usuarios: se crean en el central (con conexión) y bajan a las sucursales"
     local remoto=(mariadb -h127.0.0.1 -P"${PUERTO[central]}" -ufarmacia_remoto -p"$PW_REMOTO" farmacia)
     "${remoto[@]}" -e "INSERT INTO Usuarios (nombre_usuario, contrasena_hash, sal, rol) VALUES ('nuevo_remoto', SHA2('x',256), 'x', 'empleado')"
     esperar norte "SELECT COUNT(*) FROM farmacia.Usuarios WHERE nombre_usuario='nuevo_remoto'" 1 "cuenta nueva llegó a norte" || fallos=$((fallos+1))
     esperar sur   "SELECT COUNT(*) FROM farmacia.Usuarios WHERE nombre_usuario='nuevo_remoto'" 1 "cuenta nueva llegó a sur" || fallos=$((fallos+1))
-    if "${remoto[@]}" -e "UPDATE Productos SET precio_venta = 1 WHERE id_producto = 1" 2>/dev/null; then
+    if "${remoto[@]}" -e "UPDATE Productos SET precio_sugerido = 1 WHERE id_producto = 1" 2>/dev/null; then
         echo "  FALLO: la cuenta remota pudo modificar Productos" >&2; fallos=$((fallos+1))
     else
         echo "  ok: la cuenta remota no puede tocar nada fuera de Usuarios"

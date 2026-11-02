@@ -49,24 +49,47 @@ Simula la caída con `./demo.sh corte`; las ventas siguen y, tras
   la tabla está vacía, el login ofrece crear el administrador inicial (nunca en
   una sucursal, que las recibe del central).
 - Un admin en una sucursal crea cuentas **conectándose al central** con la
-  cuenta `farmacia_remoto` (solo escribe `Usuarios`; lee `Empleados` y
-  `Sucursales`). Su contraseña se pide al usarla y no se guarda. Sin conexión al
-  central no se pueden crear cuentas; las existentes siguen entrando.
-- En el asistente, la función **Central** crea esa cuenta y muestra su
-  contraseña una sola vez; **Sucursal** pide la dirección del central.
-  (`demo.sh init` la crea con la contraseña `remoto_pw`.)
+  cuenta `farmacia_remoto`. Su contraseña se pide al iniciar sesión y no se guarda.
+  Sin conexión al central, el admin puede entrar en modo local (solo lectura de
+  lo replicado); las cuentas existentes siguen entrando.
+- Esa cuenta y `farmacia_registro` las crea `db/distribuido/real/preparar-central.sh`
+  en el central (ver «Modelo por sesión»). `demo.sh init` crea la primera con la
+  contraseña `remoto_pw`.
 - Esa conexión va sobre TLS cuando el central es un servidor real expuesto más
   allá de la red local (ver «Central real sobre Tailscale» más abajo).
 
+## Modelo por sesión (sin elegir «central» o «sucursal»)
+
+El equipo ya no tiene una función fija. El asistente de primer arranque pide el
+central (dirección Tailscale, cuenta `farmacia_registro` y su contraseña, que no se
+guardan) y la sucursal de este equipo, y deja la replicación andando en ambos
+sentidos: cuentas de replicación en cada lado, copia inicial de lo que baja del
+central con su posición GTID exacta, `CHANGE MASTER` de la sucursal hacia el central
+y del central hacia la sucursal (conexión con nombre `sucursal_<id>`).
+
+- **Empleado:** trabaja sobre la base local (su sucursal), con o sin conexión.
+- **Administrador:** al iniciar sesión se conecta al central con `farmacia_remoto`
+  y esa conexión pasa a ser la de toda la sesión: ve todas las sucursales y
+  administra catálogo, personal, sucursales y cuentas. Sin conexión puede entrar en
+  modo local, de solo lectura para lo que administra el central.
+- **Único paso manual:** MariaDB no permite activar `log-bin` ni el `server-id` en
+  caliente. Si falta, el asistente lo detecta y muestra el `my.cnf` a usar;
+  `db/distribuido/real/preparar-nodo.sh <ranura>` lo escribe y reinicia MariaDB.
+  La ranura (2..10) sale del id de la sucursal y fija `server-id`, `gtid_domain_id`
+  y `auto_increment_offset`.
+- **Central:** `ssh <central> 'sudo bash -s' < db/distribuido/real/preparar-central.sh`
+  crea `farmacia_registro` y ajusta `farmacia_remoto`.
+- Solo Linux por ahora: en Windows el `my.ini` hay que escribirlo a mano con el mismo contenido.
+
 ## Un solo escritor por tabla (lo hace cumplir la base)
 
-El asistente de la app da a `farmacia_app` permisos según la función del equipo:
+Los permisos dependen de la cuenta con la que se conecta cada sesión:
 
-| función | escribe | solo lee |
+| conexión | escribe | solo lee |
 |---|---|---|
-| Central | sucursales, empleados, usuarios, asignaciones, catálogo | clientes, lotes, inventario, tickets, ventas, pagos, devoluciones |
-| Sucursal | clientes, lotes, inventario, tickets, ventas, pagos, devoluciones | lo que baja del central |
-| Equipo único | todo | — |
+| `farmacia_remoto` (admin, en el central) | sucursales, empleados, usuarios, asignaciones, catálogo | clientes, lotes, inventario, tickets, ventas, pagos, devoluciones |
+| `farmacia_app` de una sucursal (empleado) | clientes, lotes, inventario, tickets, ventas, pagos, devoluciones | lo que baja del central |
+| `farmacia_app` de un equipo único | todo | — |
 
 El central **no vende**: Punto de Venta no existe ahí y Clientes, Inventario y
 Tickets son de consulta (el admin ve lo de todas las sucursales). Así ninguna

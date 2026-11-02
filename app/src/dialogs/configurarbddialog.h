@@ -15,8 +15,12 @@ public:
 
 private slots:
     void configurar();
-    void actualizarFuncion();
+    void actualizarCentral();
+    void consultarSucursales();
 
 private:
+    bool datosCentralValidos();
+    void error(const QString &texto);
+    void mostrarInstrucciones(const QString &texto);
     Ui::ConfigurarBdDialog *ui;
 };

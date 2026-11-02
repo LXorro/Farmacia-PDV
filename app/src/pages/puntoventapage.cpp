@@ -119,8 +119,14 @@ void PuntoVentaPage::agregarAlCarrito() {
     int idSucursal = ui->comboSucursal->currentData().toInt();
 
     QSqlQuery buscar;
-    buscar.prepare("SELECT id_producto, nombre, precio_venta FROM Productos "
-                   "WHERE estado = 'activo' AND (codigo_barras = :texto OR nombre LIKE :like) LIMIT 1");
+    // Precio de la sucursal si lo fijó (Productos_Sucursal); si no, el sugerido del catálogo.
+    // Una sucursal puede dejar de manejar un producto (activo = 0) sin afectar a las demás.
+    buscar.prepare("SELECT p.id_producto, p.nombre, COALESCE(ps.precio_venta, p.precio_sugerido) "
+                   "FROM Productos p "
+                   "LEFT JOIN Productos_Sucursal ps ON ps.id_producto = p.id_producto AND ps.id_sucursal = :suc "
+                   "WHERE p.estado = 'activo' AND COALESCE(ps.activo, TRUE) "
+                   "AND (p.codigo_barras = :texto OR p.nombre LIKE :like) LIMIT 1");
+    buscar.bindValue(":suc", idSucursal);
     buscar.bindValue(":texto", texto);
     buscar.bindValue(":like", "%" + texto + "%");
     if (!buscar.exec() || !buscar.next()) {

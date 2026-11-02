@@ -18,6 +18,7 @@ private slots:
     void abrirRegistro();
 
 private:
+    bool conectarAdministradorAlCentral();
     bool validarEquipo(const QString &rol, int idEmpleado, int &idSucursal, QString &nombreSucursal, QString &motivo);
 
     Ui::LoginDialog *ui;

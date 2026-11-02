@@ -3,13 +3,13 @@
  <class>ConfigurarBdDialog</class>
  <widget class="QDialog" name="ConfigurarBdDialog">
   <property name="geometry">
-   <rect><x>0</x><y>0</y><width>520</width><height>470</height></rect>
+   <rect><x>0</x><y>0</y><width>520</width><height>560</height></rect>
   </property>
   <property name="windowTitle"><string>Configurar base de datos — Farmacia</string></property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QLabel" name="labelInfo">
-     <property name="text"><string>Es la primera vez que se usa la aplicación en este equipo, o la base de datos no está lista. Indica una cuenta administradora de MariaDB (normalmente «root»): se usará una sola vez para crear la base «farmacia» y un usuario propio de la aplicación. La contraseña de administrador no se guarda.</string></property>
+     <property name="text"><string>Es la primera vez que se usa la aplicación en este equipo, o la base de datos no está lista. Indica una cuenta administradora del MariaDB de este equipo (normalmente «root»): se usará una sola vez para crear la base «farmacia» y un usuario propio de la aplicación. Si lo conectas con un central, también se configura la replicación. Las contraseñas de administración y de registro no se guardan.</string></property>
      <property name="wordWrap"><bool>true</bool></property>
     </widget>
    </item>
@@ -40,14 +40,10 @@
        <property name="echoMode"><enum>QLineEdit::Password</enum></property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="labelFuncion"><property name="text"><string>Función de este equipo:</string></property></widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QComboBox" name="comboFuncion">
-       <item><property name="text"><string>Equipo único (sin sincronización)</string></property></item>
-       <item><property name="text"><string>Central</string></property></item>
-       <item><property name="text"><string>Sucursal</string></property></item>
+     <item row="3" column="0" colspan="2">
+      <widget class="QCheckBox" name="checkCentral">
+       <property name="text"><string>Conectar este equipo con un central (replicación automática)</string></property>
+       <property name="checked"><bool>true</bool></property>
       </widget>
      </item>
      <item row="4" column="0">
@@ -64,6 +60,31 @@
        <property name="minimum"><number>1</number></property>
        <property name="maximum"><number>65535</number></property>
       </widget>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="labelUsuarioRegistro"><property name="text"><string>Cuenta de registro:</string></property></widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QLineEdit" name="lineUsuarioRegistro">
+       <property name="text"><string>farmacia_registro</string></property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="labelContrasenaRegistro"><property name="text"><string>Contraseña de registro:</string></property></widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QLineEdit" name="lineContrasenaRegistro">
+       <property name="echoMode"><enum>QLineEdit::Password</enum></property>
+      </widget>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLabel" name="labelSucursal"><property name="text"><string>Sucursal de este equipo:</string></property></widget>
+     </item>
+     <item row="8" column="1">
+      <layout class="QHBoxLayout" name="sucursalLayout">
+       <item><widget class="QComboBox" name="comboSucursal"/></item>
+       <item><widget class="QPushButton" name="btnConsultar"><property name="text"><string>Consultar</string></property></widget></item>
+      </layout>
      </item>
     </layout>
    </item>

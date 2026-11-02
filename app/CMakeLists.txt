@@ -7,7 +7,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Svg)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Svg Network)
 
 add_executable(FarmaciaApp
     src/main.cpp
@@ -82,6 +82,8 @@ add_executable(FarmaciaApp
     src/dialogs/empleadodialog.h
     src/dialogs/empleadodialog.cpp
     src/dialogs/empleadodialog.ui
+    src/dialogs/productosucursaldialog.h
+    src/dialogs/productosucursaldialog.cpp
     src/dialogs/lotedialog.h
     src/dialogs/lotedialog.cpp
     src/dialogs/lotedialog.ui
@@ -110,4 +112,4 @@ add_executable(FarmaciaApp
 )
 
 target_include_directories(FarmaciaApp PRIVATE src)
-target_link_libraries(FarmaciaApp PRIVATE Qt6::Widgets Qt6::Sql Qt6::Svg)
+target_link_libraries(FarmaciaApp PRIVATE Qt6::Widgets Qt6::Sql Qt6::Svg Qt6::Network)

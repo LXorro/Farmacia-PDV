@@ -42,7 +42,7 @@ void LotesPage::refrescar() {
     QString sql =
         "SELECT l.id_lote AS 'ID', p.nombre AS 'Producto', s.nombre AS 'Sucursal', "
         "l.numero_lote AS 'N.º de lote', l.fecha_caducidad AS 'Caducidad', "
-        "l.cantidad_disponible AS 'Disponible', "
+        "l.cantidad_disponible AS 'Disponible', l.costo_unitario AS 'Costo unitario', "
         "CASE WHEN l.cantidad_disponible <= 0 THEN 'agotado' "
         "WHEN l.fecha_caducidad < CURDATE() THEN 'caducado' "
         "ELSE 'disponible' END AS 'Estado' "

@@ -62,7 +62,7 @@ void LoteDialog::cargarLote() {
         return;
 
     QSqlQuery query;
-    query.prepare("SELECT id_producto, id_sucursal, numero_lote, fecha_caducidad, cantidad_disponible "
+    query.prepare("SELECT id_producto, id_sucursal, numero_lote, fecha_caducidad, cantidad_disponible, costo_unitario "
                   "FROM Lotes WHERE id_lote = :id");
     query.bindValue(":id", m_idLote);
     if (!query.exec() || !query.next())
@@ -92,6 +92,7 @@ void LoteDialog::cargarLote() {
     // Al editar se permite dejar el lote en 0 (agotado manualmente / merma).
     ui->spinCantidad->setMinimum(0);
     ui->spinCantidad->setValue(query.value(4).toInt());
+    ui->spinCosto->setValue(query.value(5).toDouble());
 }
 
 void LoteDialog::guardar() {
@@ -104,12 +105,12 @@ void LoteDialog::guardar() {
     if (m_idLote < 0) {
         query.prepare(
             "INSERT INTO Lotes (id_producto, id_sucursal, numero_lote, fecha_caducidad, "
-            "cantidad_inicial, cantidad_disponible, estado) "
-            "VALUES (:producto, :sucursal, :numero, :caducidad, :cantidad, :cantidad, :estado)");
+            "cantidad_inicial, cantidad_disponible, costo_unitario, estado) "
+            "VALUES (:producto, :sucursal, :numero, :caducidad, :cantidad, :cantidad, :costo, :estado)");
     } else {
         query.prepare(
             "UPDATE Lotes SET numero_lote = :numero, fecha_caducidad = :caducidad, "
-            "cantidad_disponible = :cantidad, estado = :estado WHERE id_lote = :id");
+            "cantidad_disponible = :cantidad, costo_unitario = :costo, estado = :estado WHERE id_lote = :id");
         query.bindValue(":id", m_idLote);
     }
 
@@ -118,6 +119,7 @@ void LoteDialog::guardar() {
     query.bindValue(":numero", ui->lineNumeroLote->text().trimmed());
     query.bindValue(":caducidad", ui->dateFechaCaducidad->date());
     query.bindValue(":cantidad", ui->spinCantidad->value());
+    query.bindValue(":costo", ui->spinCosto->value());
     query.bindValue(":estado", estadoDerivado());
 
     if (!query.exec()) {

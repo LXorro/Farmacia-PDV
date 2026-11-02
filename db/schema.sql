@@ -60,13 +60,29 @@ CREATE TABLE Productos (
     codigo_barras    VARCHAR(50) UNIQUE,
     id_categoria     INT,
     id_proveedor     INT,
-    precio_compra    DECIMAL(10,2) NOT NULL DEFAULT 0,
-    precio_venta     DECIMAL(10,2) NOT NULL DEFAULT 0,
+    precio_sugerido  DECIMAL(10,2) NOT NULL DEFAULT 0,   -- cada sucursal puede fijar el suyo en Productos_Sucursal
     requiere_receta  BOOLEAN NOT NULL DEFAULT FALSE,
     -- Solo refleja si el producto sigue en catálogo; agotado/caducado se derivan de Lotes.
     estado           ENUM('activo', 'descontinuado') NOT NULL DEFAULT 'activo',
     CONSTRAINT fk_productos_categoria FOREIGN KEY (id_categoria) REFERENCES Categorias(id_categoria),
     CONSTRAINT fk_productos_proveedor FOREIGN KEY (id_proveedor) REFERENCES Proveedores(id_proveedor)
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- Productos_Sucursal: lo que cada sucursal decide sobre un producto del catálogo
+-- (precio propio, si lo maneja y su mínimo de existencias). Lo escribe SOLO la
+-- sucursal dueña de la fila y sube al central: el catálogo sigue siendo único.
+-- Sin fila, la sucursal vende al precio sugerido y el producto está activo.
+-- ---------------------------------------------------------------------
+CREATE TABLE Productos_Sucursal (
+    id_producto   INT NOT NULL,
+    id_sucursal   INT NOT NULL,
+    precio_venta  DECIMAL(10,2) NULL,          -- NULL = usar el precio sugerido del catálogo
+    activo        BOOLEAN NOT NULL DEFAULT TRUE,
+    stock_minimo  INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (id_producto, id_sucursal),
+    CONSTRAINT fk_prodsuc_producto FOREIGN KEY (id_producto) REFERENCES Productos(id_producto),
+    CONSTRAINT fk_prodsuc_sucursal FOREIGN KEY (id_sucursal) REFERENCES Sucursales(id_sucursal)
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
@@ -112,6 +128,7 @@ CREATE TABLE Lotes (
     fecha_caducidad      DATE,
     cantidad_inicial     INT NOT NULL,
     cantidad_disponible  INT NOT NULL,
+    costo_unitario       DECIMAL(10,2) NOT NULL DEFAULT 0,   -- lo que costó ESTE lote (cada compra cuesta distinto)
     estado               ENUM('disponible', 'agotado', 'caducado') NOT NULL DEFAULT 'disponible',
     CONSTRAINT fk_lotes_producto FOREIGN KEY (id_producto) REFERENCES Productos(id_producto),
     CONSTRAINT fk_lotes_sucursal FOREIGN KEY (id_sucursal) REFERENCES Sucursales(id_sucursal)

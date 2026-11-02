@@ -16,10 +16,10 @@ INSERT INTO Proveedores (id_proveedor, nombre_empresa, telefono, correo, direcci
     (1, 'Distribuidora Médica SA', '5551112222', 'ventas@dismed.com', 'Calle Industria 1', 'activo');
 
 INSERT INTO Productos (id_producto, nombre, marca, descripcion, codigo_barras, id_categoria, id_proveedor,
-                       precio_compra, precio_venta, requiere_receta, estado) VALUES
-    (1, 'Paracetamol 500mg', 'GenFar',   'Caja con 20 tabletas', '7501000000011', 1, 1, 15.00,  28.00, FALSE, 'activo'),
-    (2, 'Amoxicilina 500mg', 'Farmex',   'Caja con 12 cápsulas', '7501000000028', 1, 1, 40.00,  70.00, TRUE,  'activo'),
-    (3, 'Jabón antibacterial', 'Cuidamax', 'Barra 120g',          '7501000000035', 2, 1,  8.00,  18.00, FALSE, 'activo');
+                       precio_sugerido, requiere_receta, estado) VALUES
+    (1, 'Paracetamol 500mg', 'GenFar',   'Caja con 20 tabletas', '7501000000011', 1, 1,  28.00, FALSE, 'activo'),
+    (2, 'Amoxicilina 500mg', 'Farmex',   'Caja con 12 cápsulas', '7501000000028', 1, 1,  70.00, TRUE,  'activo'),
+    (3, 'Jabón antibacterial', 'Cuidamax', 'Barra 120g',          '7501000000035', 2, 1,  18.00, FALSE, 'activo');
 
 INSERT INTO Empleados (id_empleado, id_sucursal, nombre, apellido_paterno, puesto, estado) VALUES
     (1, 1, 'Admin', 'Central', 'Administrador', 'activo'),

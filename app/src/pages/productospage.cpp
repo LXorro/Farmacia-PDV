@@ -3,6 +3,7 @@
 #include "../util/iconos.h"
 #include "../util/tablas.h"
 #include "../dialogs/productodialog.h"
+#include "../dialogs/productosucursaldialog.h"
 #include "../database/databasemanager.h"
 #include "../database/sesionactual.h"
 
@@ -30,11 +31,17 @@ ProductosPage::ProductosPage(QWidget *parent) : QWidget(parent), ui(new Ui::Prod
     connect(ui->btnEditar, &QPushButton::clicked, this, &ProductosPage::editarProducto);
     connect(ui->btnEliminar, &QPushButton::clicked, this, &ProductosPage::eliminarProducto);
     connect(ui->btnRefrescar, &QPushButton::clicked, this, &ProductosPage::refrescar);
+    connect(ui->btnPrecioSucursal, &QPushButton::clicked, this, &ProductosPage::precioEnSucursal);
 
     ui->btnNuevo->setIcon(Iconos::nuevo());
     ui->btnEditar->setIcon(Iconos::editar());
     ui->btnEliminar->setIcon(Iconos::eliminar());
     ui->btnRefrescar->setIcon(Iconos::refrescar());
+
+    // El precio, si se maneja y el mínimo de existencias los decide cada sucursal (no el catálogo):
+    // lo edita quien trabaja sobre la base de una sucursal, nunca desde el central.
+    ui->btnPrecioSucursal->setEnabled(SesionActual::instance().idSucursal() >= 0
+                                      && !SesionActual::instance().veTodasLasSucursales());
 
     // Productos es catálogo maestro: solo el admin (central) lo edita.
     if (!SesionActual::instance().esAdmin() || DatabaseManager::esSucursal()) {
@@ -66,20 +73,53 @@ void ProductosPage::refrescar() {
         "AND l.fecha_caducidad >= CURDATE() AND l.fecha_caducidad <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) %1)")
         .arg(filtroSucursal);
 
+    // En una sucursal se ve su precio (o el sugerido si no fijó uno) y su mínimo; el admin, el catálogo.
+    const bool local = !SesionActual::instance().veTodasLasSucursales();
+    const QString precioSucursal = local
+        ? ", COALESCE(ps.precio_venta, p.precio_sugerido) AS 'Precio en sucursal', ps.stock_minimo AS 'Mínimo'" : "";
+    const QString unirSucursal = local
+        ? QString("LEFT JOIN Productos_Sucursal ps ON ps.id_producto = p.id_producto AND ps.id_sucursal = %1 ")
+              .arg(SesionActual::instance().idSucursal())
+        : QString();
+    const QString noSeManeja = local ? "WHEN ps.activo = 0 THEN 'no se maneja' " : "";
+    const QString bajoMinimo = local ? QString("WHEN ps.stock_minimo > 0 AND %1 <= ps.stock_minimo THEN 'bajo mínimo' ").arg(existencias)
+                                     : QString();
+
     m_model->setQuery(QString(
         "SELECT p.id_producto AS 'ID', p.nombre AS 'Nombre', p.marca AS 'Marca', "
         "p.codigo_barras AS 'Código de barras', c.nombre AS 'Categoría', "
-        "pr.nombre_empresa AS 'Proveedor', p.precio_compra AS 'Precio compra', "
-        "p.precio_venta AS 'Precio venta', p.requiere_receta AS 'Receta', "
+        "pr.nombre_empresa AS 'Proveedor', p.precio_sugerido AS 'Precio sugerido'%3, "
+        "p.requiere_receta AS 'Receta', "
         "%1 AS 'Existencias', "
-        "CASE WHEN %1 = 0 THEN 'agotado' WHEN %2 THEN 'por caducar' ELSE 'disponible' END AS 'Disponibilidad', "
+        "CASE %4WHEN %1 = 0 THEN 'agotado' %5WHEN %2 THEN 'por caducar' ELSE 'disponible' END AS 'Disponibilidad', "
         "p.estado AS 'Estado' "
         "FROM Productos p "
         "LEFT JOIN Categorias c ON c.id_categoria = p.id_categoria "
         "LEFT JOIN Proveedores pr ON pr.id_proveedor = p.id_proveedor "
-        "ORDER BY p.nombre").arg(existencias, porCaducar));
+        "%6"
+        "ORDER BY p.nombre").arg(existencias, porCaducar, precioSucursal, noSeManeja, bajoMinimo, unirSucursal));
     ui->tableView->hideColumn(0);  // ID: catálogo puro, no aporta al usuario
     ui->tableView->resizeColumnsToContents();
+}
+
+void ProductosPage::precioEnSucursal() {
+    auto seleccion = ui->tableView->selectionModel()->selectedRows();
+    if (seleccion.isEmpty()) {
+        QMessageBox::information(this, "Precio en mi sucursal", "Selecciona un producto de la lista.");
+        return;
+    }
+    const int fila = seleccion.first().row();
+    const int id = m_model->data(m_model->index(fila, 0)).toInt();
+    const QString nombre = m_model->data(m_model->index(fila, 1)).toString();
+
+    QSqlQuery sugerido;
+    sugerido.prepare("SELECT precio_sugerido FROM Productos WHERE id_producto = :id");
+    sugerido.bindValue(":id", id);
+    const double precio = sugerido.exec() && sugerido.next() ? sugerido.value(0).toDouble() : 0.0;
+
+    ProductoSucursalDialog dialog(id, SesionActual::instance().idSucursal(), nombre, precio, this);
+    if (dialog.exec() == QDialog::Accepted)
+        refrescar();
 }
 
 void ProductosPage::nuevoProducto() {

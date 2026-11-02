@@ -50,8 +50,7 @@ erDiagram
         string codigo_barras
         int id_categoria FK
         int id_proveedor FK
-        decimal precio_compra
-        decimal precio_venta
+        decimal precio_sugerido
         bool requiere_receta
     }
     CLIENTES {

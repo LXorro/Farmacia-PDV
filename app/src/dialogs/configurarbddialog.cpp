@@ -5,17 +5,19 @@
 #include "../database/dbinicializador.h"
 
 #include <QApplication>
-#include <QInputDialog>
-#include <QLineEdit>
+#include <QMessageBox>
+#include <QPlainTextEdit>
+#include <QVBoxLayout>
 
 ConfigurarBdDialog::ConfigurarBdDialog(QWidget *parent) : QDialog(parent), ui(new Ui::ConfigurarBdDialog) {
     ui->setupUi(this);
     ui->spinPuerto->setValue(DbConfig::kPort);
+    ui->spinPuertoCentral->setValue(DbConfig::kPort);
     connect(ui->btnConfigurar, &QPushButton::clicked, this, &ConfigurarBdDialog::configurar);
     connect(ui->btnCancelar, &QPushButton::clicked, this, &QDialog::reject);
-    connect(ui->comboFuncion, qOverload<int>(&QComboBox::currentIndexChanged), this, &ConfigurarBdDialog::actualizarFuncion);
-    ui->spinPuertoCentral->setValue(DbConfig::kPort);
-    actualizarFuncion();
+    connect(ui->btnConsultar, &QPushButton::clicked, this, &ConfigurarBdDialog::consultarSucursales);
+    connect(ui->checkCentral, &QCheckBox::toggled, this, &ConfigurarBdDialog::actualizarCentral);
+    actualizarCentral();
     ui->lineContrasenaAdmin->setFocus();
 }
 
@@ -23,68 +25,155 @@ ConfigurarBdDialog::~ConfigurarBdDialog() {
     delete ui;
 }
 
-// 0 = equipo único, 1 = central, 2 = sucursal.
-void ConfigurarBdDialog::actualizarFuncion() {
-    const int funcion = ui->comboFuncion->currentIndex();
-    const bool sucursal = funcion == 2;
-    ui->labelHostCentral->setVisible(sucursal);
-    ui->lineHostCentral->setVisible(sucursal);
-    ui->labelPuertoCentral->setVisible(sucursal);
-    ui->spinPuertoCentral->setVisible(sucursal);
+void ConfigurarBdDialog::actualizarCentral() {
+    const bool conCentral = ui->checkCentral->isChecked();
+    for (QWidget *w : {static_cast<QWidget *>(ui->labelHostCentral), static_cast<QWidget *>(ui->lineHostCentral),
+                       static_cast<QWidget *>(ui->labelPuertoCentral), static_cast<QWidget *>(ui->spinPuertoCentral),
+                       static_cast<QWidget *>(ui->labelUsuarioRegistro), static_cast<QWidget *>(ui->lineUsuarioRegistro),
+                       static_cast<QWidget *>(ui->labelContrasenaRegistro), static_cast<QWidget *>(ui->lineContrasenaRegistro),
+                       static_cast<QWidget *>(ui->labelSucursal), static_cast<QWidget *>(ui->comboSucursal),
+                       static_cast<QWidget *>(ui->btnConsultar)})
+        w->setVisible(conCentral);
+    ui->labelAyudaFuncion->setText(
+        conCentral
+            ? "Los empleados trabajan sobre la base de este equipo, que se sincroniza con el central. Los "
+              "administradores, al iniciar sesión, se conectan al central y ven todas las sucursales."
+            : "Una sola base de datos local, sin conexión con otros equipos.");
+}
 
-    static const char *ayuda[] = {
-        "Una sola base de datos local, sin conexión con otros equipos.",
-        "Aquí se administran usuarios, empleados, sucursales y catálogo. Se creará una cuenta de "
-        "administración remota para que las sucursales puedan dar de alta usuarios.",
-        "Recibe usuarios y catálogo del central. Para crear usuarios se conecta al central "
-        "(se pedirá su contraseña de administración al hacerlo; no se guarda)."};
-    ui->labelAyudaFuncion->setText(ayuda[funcion]);
+void ConfigurarBdDialog::error(const QString &texto) {
+    ui->labelError->setStyleSheet("color: #b00020;");
+    ui->labelError->setText(texto);
+}
+
+static DbInicializador::Central centralDesdeFormulario(Ui::ConfigurarBdDialog *ui) {
+    DbInicializador::Central central;
+    central.host = ui->lineHostCentral->text().trimmed();
+    central.puerto = ui->spinPuertoCentral->value();
+    central.usuario = ui->lineUsuarioRegistro->text().trimmed();
+    central.contrasena = ui->lineContrasenaRegistro->text();
+    return central;
+}
+
+bool ConfigurarBdDialog::datosCentralValidos() {
+    if (ui->lineHostCentral->text().trimmed().isEmpty()) {
+        error("Indica la dirección del central.");
+        return false;
+    }
+    if (ui->lineUsuarioRegistro->text().trimmed().isEmpty() || ui->lineContrasenaRegistro->text().isEmpty()) {
+        error("Indica la cuenta y la contraseña de registro del central.");
+        return false;
+    }
+    return true;
+}
+
+void ConfigurarBdDialog::consultarSucursales() {
+    if (!datosCentralValidos())
+        return;
+    ui->labelError->setStyleSheet("color: #555555;");
+    ui->labelError->setText("Consultando el central…");
+    QApplication::processEvents();
+
+    QList<DbInicializador::SucursalInfo> sucursales;
+    QString mensaje;
+    if (!DbInicializador::listarSucursales(centralDesdeFormulario(ui), sucursales, mensaje)) {
+        error("No se pudo consultar el central:\n" + mensaje);
+        return;
+    }
+    ui->comboSucursal->clear();
+    for (const auto &sucursal : sucursales)
+        ui->comboSucursal->addItem(sucursal.nombre, sucursal.id);
+    if (sucursales.isEmpty()) {
+        error("El central no tiene sucursales. Un administrador debe darlas de alta primero.");
+        return;
+    }
+    ui->labelError->clear();
 }
 
 void ConfigurarBdDialog::configurar() {
-    const int funcion = ui->comboFuncion->currentIndex();
-    if (funcion == 2 && ui->lineHostCentral->text().trimmed().isEmpty()) {
-        ui->labelError->setStyleSheet("color: #b00020;");
-        ui->labelError->setText("Indica la dirección del central.");
-        return;
+    const bool conCentral = ui->checkCentral->isChecked();
+    if (conCentral) {
+        if (!datosCentralValidos())
+            return;
+        if (ui->comboSucursal->count() == 0)
+            consultarSucursales();
+        if (ui->comboSucursal->count() == 0)
+            return;
     }
+    const int idSucursal = conCentral ? ui->comboSucursal->currentData().toInt() : -1;
+    const DbInicializador::Central central = centralDesdeFormulario(ui);
+    const QString usuarioAdmin = ui->lineUsuarioAdmin->text().trimmed();
+    const QString contrasenaAdmin = ui->lineContrasenaAdmin->text();
+    const int puerto = ui->spinPuerto->value();
 
     ui->labelError->clear();
     ui->btnConfigurar->setEnabled(false);
     ui->labelError->setStyleSheet("color: #555555;");
-    ui->labelError->setText("Configurando…");
-    QApplication::processEvents();
+    auto avance = [this](const QString &texto) {
+        ui->labelError->setText(texto);
+        QApplication::processEvents();
+    };
 
+    if (conCentral) {
+        avance("Comprobando la configuración de MariaDB de este equipo…");
+        QString instrucciones;
+        if (!DbInicializador::verificarNodoLocal(DbConfig::kHost, puerto, usuarioAdmin, contrasenaAdmin,
+                                                 DbInicializador::ranuraDeSucursal(idSucursal), instrucciones)) {
+            ui->btnConfigurar->setEnabled(true);
+            ui->labelError->clear();
+            mostrarInstrucciones(instrucciones);
+            return;
+        }
+    }
+
+    avance("Preparando la base de datos local…");
     const auto resultado = DbInicializador::inicializar(
-        DbConfig::kHost, ui->spinPuerto->value(), ui->lineUsuarioAdmin->text().trimmed(),
-        ui->lineContrasenaAdmin->text(),
-        funcion == 1 ? DbInicializador::Rol::Central
-        : funcion == 2 ? DbInicializador::Rol::Sucursal : DbInicializador::Rol::Unico);
-
-    // La contraseña de administrador no se conserva en ningún sitio.
-    ui->lineContrasenaAdmin->clear();
-    ui->btnConfigurar->setEnabled(true);
-
+        DbConfig::kHost, puerto, usuarioAdmin, contrasenaAdmin,
+        conCentral ? DbInicializador::Rol::Sucursal : DbInicializador::Rol::Unico);
     if (!resultado.ok) {
-        ui->labelError->setStyleSheet("color: #b00020;");
-        ui->labelError->setText("No se pudo configurar:\n" + resultado.error);
+        ui->btnConfigurar->setEnabled(true);
+        error("No se pudo configurar:\n" + resultado.error);
         return;
     }
 
-    DatabaseManager::instance().guardarCredenciales(DbConfig::kHost, ui->spinPuerto->value(), resultado.usuario,
-                                                    resultado.contrasena);
-    DatabaseManager::instance().guardarFuncion(
-        funcion == 1 ? DatabaseManager::Funcion::Central
-        : funcion == 2 ? DatabaseManager::Funcion::Sucursal : DatabaseManager::Funcion::Unico,
-        funcion == 2 ? ui->lineHostCentral->text().trimmed() : QString(),
-        funcion == 2 ? ui->spinPuertoCentral->value() : 0);
+    if (conCentral) {
+        avance("Configurando la replicación con el central…");
+        QString mensaje;
+        if (!DbInicializador::enlazarConCentral(DbConfig::kHost, puerto, usuarioAdmin, contrasenaAdmin, central,
+                                                idSucursal, mensaje)) {
+            ui->btnConfigurar->setEnabled(true);
+            error("No se pudo enlazar con el central:\n" + mensaje);
+            return;
+        }
+    }
 
-    if (funcion == 1) {
-        // Se muestra una sola vez: las sucursales la piden al administrar usuarios.
-        QInputDialog::getText(this, "Cuenta de administración remota",
-                              "Anota esta contraseña (cuenta «farmacia_remoto»). Los administradores de las "
-                              "sucursales la necesitarán para crear usuarios. No se volverá a mostrar.",
-                              QLineEdit::Normal, resultado.contrasenaRemota);
+    // Las contraseñas de administración y de registro no se conservan en ningún sitio.
+    ui->lineContrasenaAdmin->clear();
+    ui->lineContrasenaRegistro->clear();
+    ui->btnConfigurar->setEnabled(true);
+
+    auto &gestor = DatabaseManager::instance();
+    gestor.guardarCredenciales(DbConfig::kHost, puerto, resultado.usuario, resultado.contrasena);
+    if (conCentral) {
+        gestor.guardarCentral(central.host, central.puerto);
+        gestor.guardarSucursalNodo(idSucursal);
+    } else {
+        gestor.guardarCentral(QString(), 0);
+        gestor.guardarSucursalNodo(-1);
     }
     accept();
+}
+
+void ConfigurarBdDialog::mostrarInstrucciones(const QString &texto) {
+    QDialog dialogo(this);
+    dialogo.setWindowTitle("Falta preparar MariaDB");
+    dialogo.resize(640, 460);
+    auto *capa = new QVBoxLayout(&dialogo);
+    auto *editor = new QPlainTextEdit(texto, &dialogo);
+    editor->setReadOnly(true);
+    capa->addWidget(editor);
+    auto *cerrar = new QPushButton("Entendido", &dialogo);
+    connect(cerrar, &QPushButton::clicked, &dialogo, &QDialog::accept);
+    capa->addWidget(cerrar);
+    dialogo.exec();
 }
