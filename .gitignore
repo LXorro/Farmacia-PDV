@@ -30,3 +30,39 @@ Thumbs.db
 
 # --- Demo de autonomía local: nodos MariaDB generados por db/distribuido/autonomia/demo.sh ---
 db/distribuido/autonomia/nodos/
+
+# --- Salida de CMake in-source (app/) ---
+app/CMakeCache.txt
+app/CMakeFiles/
+app/cmake_install.cmake
+app/Makefile
+app/.qt/
+app/*_autogen/
+app/FarmaciaApp
+app/FarmaciaApp.exe
+app/.cmake/
+CMakeUserPresets.json
+*.o
+*.obj
+*.a
+*.so
+*.dll
+*.exe
+*.moc
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+
+# --- Core dumps, logs y secretos locales ---
+core
+core.*
+*.log
+*.orig
+*.rej
+.env
+.env.*
+*.pem
+*.key
+
+# --- Claude Code (configuración local) ---
+.claude/settings.local.json
