@@ -1,9 +1,13 @@
 #include "databasemanager.h"
 #include "dbconfig.h"
 
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QSettings>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QStandardPaths>
 
 DatabaseManager &DatabaseManager::instance() {
     static DatabaseManager mgr;
@@ -91,6 +95,18 @@ bool DatabaseManager::centralConectado() const {
     return ping.exec("SELECT 1");
 }
 
+QString DatabaseManager::rutaCertificadoCentral() {
+    static const QString ruta = [] {
+        const QString destino = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                                 + "/central-ca.pem";
+        QDir().mkpath(QFileInfo(destino).absolutePath());
+        QFile::remove(destino);
+        QFile(":/certs/central-ca.pem").copy(destino);
+        return destino;
+    }();
+    return ruta;
+}
+
 bool DatabaseManager::conectarCentral(const QString &contrasena) {
     if (!esSucursal())
         return true;
@@ -107,9 +123,11 @@ bool DatabaseManager::conectarCentral(const QString &contrasena) {
     base.setDatabaseName(DbConfig::kDatabase);
     base.setUserName(DbConfig::kUsuarioRemoto);
     base.setPassword(contrasena);
-    // Sin conexión no debe congelar la ventana. SSL_MODE_REQUIRED: cifra la conexión sin
-    // exigir que el certificado del central esté firmado por una CA conocida (autofirmado).
-    base.setConnectOptions("MYSQL_OPT_CONNECT_TIMEOUT=5;MYSQL_OPT_SSL_MODE=SSL_MODE_REQUIRED");
+    // Sin conexión no debe congelar la ventana. El driver QMYSQL no soporta MYSQL_OPT_SSL_MODE
+    // (lo ignora en silencio); para aceptar el certificado autofirmado del central hay que darle
+    // SSL_CA con ese certificado exacto, que confía en él sin necesitar una CA pública.
+    base.setConnectOptions(QStringLiteral("MYSQL_OPT_CONNECT_TIMEOUT=5;SSL_CA=%1")
+                                .arg(rutaCertificadoCentral()));
     if (!base.open()) {
         m_lastError = base.lastError().text();
         return false;

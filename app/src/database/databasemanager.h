@@ -39,5 +39,8 @@ public:
 
 private:
     DatabaseManager() = default;
+    // Vuelca el certificado embebido del central (resources/certs/central-ca.pem) a un archivo
+    // real en disco, porque el driver MySQL no puede leer rutas de recursos de Qt (":/...").
+    static QString rutaCertificadoCentral();
     QString m_lastError;
 };
