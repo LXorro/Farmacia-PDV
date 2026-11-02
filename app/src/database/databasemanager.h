@@ -24,7 +24,10 @@ public:
     enum class Funcion { Unico, Central, Sucursal };
     static Funcion funcion();
     static bool esSucursal() { return funcion() == Funcion::Sucursal; }
-    void guardarFuncion(Funcion funcion, const QString &hostCentral = QString(), int puertoCentral = 0);
+    // certificadoCentral: contenido del .pem a confiar para TLS con el central (vacío = sin TLS
+    // explícito). Se guarda en QSettings, no en el binario: así se puede cambiar/rotar sin recompilar.
+    void guardarFuncion(Funcion funcion, const QString &hostCentral = QString(), int puertoCentral = 0,
+                         const QString &certificadoCentral = QString());
 
     // Sucursal a la que pertenece este equipo (solo en funciones "sucursal"); -1 si aún no se asignó.
     static int idSucursalNodo();
@@ -39,8 +42,8 @@ public:
 
 private:
     DatabaseManager() = default;
-    // Vuelca el certificado embebido del central (resources/certs/central-ca.pem) a un archivo
-    // real en disco, porque el driver MySQL no puede leer rutas de recursos de Qt (":/...").
+    // Vuelca el certificado guardado en QSettings a un archivo real en disco (el driver MySQL
+    // necesita una ruta de archivo, no puede leer directo de QSettings); vacío si no hay ninguno.
     static QString rutaCertificadoCentral();
     QString m_lastError;
 };

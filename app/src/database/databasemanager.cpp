@@ -63,12 +63,14 @@ DatabaseManager::Funcion DatabaseManager::funcion() {
     return valor == "sucursal" ? Funcion::Sucursal : Funcion::Unico;
 }
 
-void DatabaseManager::guardarFuncion(Funcion funcion, const QString &hostCentral, int puertoCentral) {
+void DatabaseManager::guardarFuncion(Funcion funcion, const QString &hostCentral, int puertoCentral,
+                                     const QString &certificadoCentral) {
     QSettings ajustes;
     ajustes.setValue("nodo/funcion", funcion == Funcion::Central ? "central"
                                      : funcion == Funcion::Sucursal ? "sucursal" : "unico");
     ajustes.setValue("central/host", hostCentral);
     ajustes.setValue("central/puerto", puertoCentral);
+    ajustes.setValue("central/certificado", certificadoCentral);
 }
 
 int DatabaseManager::idSucursalNodo() {
@@ -96,15 +98,17 @@ bool DatabaseManager::centralConectado() const {
 }
 
 QString DatabaseManager::rutaCertificadoCentral() {
-    static const QString ruta = [] {
-        const QString destino = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
-                                 + "/central-ca.pem";
-        QDir().mkpath(QFileInfo(destino).absolutePath());
-        QFile::remove(destino);
-        QFile(":/certs/central-ca.pem").copy(destino);
-        return destino;
-    }();
-    return ruta;
+    const QString pem = QSettings().value("central/certificado").toString();
+    if (pem.trimmed().isEmpty())
+        return QString();
+
+    const QString destino = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                             + "/central-ca.pem";
+    QDir().mkpath(QFileInfo(destino).absolutePath());
+    QFile archivo(destino);
+    if (archivo.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        archivo.write(pem.toUtf8());
+    return destino;
 }
 
 bool DatabaseManager::conectarCentral(const QString &contrasena) {
@@ -126,8 +130,11 @@ bool DatabaseManager::conectarCentral(const QString &contrasena) {
     // Sin conexión no debe congelar la ventana. El driver QMYSQL no soporta MYSQL_OPT_SSL_MODE
     // (lo ignora en silencio); para aceptar el certificado autofirmado del central hay que darle
     // SSL_CA con ese certificado exacto, que confía en él sin necesitar una CA pública.
-    base.setConnectOptions(QStringLiteral("MYSQL_OPT_CONNECT_TIMEOUT=5;SSL_CA=%1")
-                                .arg(rutaCertificadoCentral()));
+    QString opciones = QStringLiteral("MYSQL_OPT_CONNECT_TIMEOUT=5");
+    const QString certificado = rutaCertificadoCentral();
+    if (!certificado.isEmpty())
+        opciones += ";SSL_CA=" + certificado;
+    base.setConnectOptions(opciones);
     if (!base.open()) {
         m_lastError = base.lastError().text();
         return false;

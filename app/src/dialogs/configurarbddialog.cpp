@@ -5,6 +5,9 @@
 #include "../database/dbinicializador.h"
 
 #include <QApplication>
+#include <QFile>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QInputDialog>
 #include <QLineEdit>
 
@@ -14,6 +17,7 @@ ConfigurarBdDialog::ConfigurarBdDialog(QWidget *parent) : QDialog(parent), ui(ne
     connect(ui->btnConfigurar, &QPushButton::clicked, this, &ConfigurarBdDialog::configurar);
     connect(ui->btnCancelar, &QPushButton::clicked, this, &QDialog::reject);
     connect(ui->comboFuncion, qOverload<int>(&QComboBox::currentIndexChanged), this, &ConfigurarBdDialog::actualizarFuncion);
+    connect(ui->btnCertificadoCentral, &QPushButton::clicked, this, &ConfigurarBdDialog::elegirCertificadoCentral);
     ui->spinPuertoCentral->setValue(DbConfig::kPort);
     actualizarFuncion();
     ui->lineContrasenaAdmin->setFocus();
@@ -31,6 +35,9 @@ void ConfigurarBdDialog::actualizarFuncion() {
     ui->lineHostCentral->setVisible(sucursal);
     ui->labelPuertoCentral->setVisible(sucursal);
     ui->spinPuertoCentral->setVisible(sucursal);
+    ui->labelCertificadoCentral->setVisible(sucursal);
+    ui->lineCertificadoCentral->setVisible(sucursal);
+    ui->btnCertificadoCentral->setVisible(sucursal);
 
     static const char *ayuda[] = {
         "Una sola base de datos local, sin conexión con otros equipos.",
@@ -39,6 +46,22 @@ void ConfigurarBdDialog::actualizarFuncion() {
         "Recibe usuarios y catálogo del central. Para crear usuarios se conecta al central "
         "(se pedirá su contraseña de administración al hacerlo; no se guarda)."};
     ui->labelAyudaFuncion->setText(ayuda[funcion]);
+}
+
+void ConfigurarBdDialog::elegirCertificadoCentral() {
+    const QString ruta = QFileDialog::getOpenFileName(this, "Certificado TLS del central", QString(),
+                                                        "Certificados (*.pem *.crt *.cer);;Todos los archivos (*)");
+    if (ruta.isEmpty())
+        return;
+
+    QFile archivo(ruta);
+    if (!archivo.open(QIODevice::ReadOnly)) {
+        ui->labelError->setStyleSheet("color: #b00020;");
+        ui->labelError->setText("No se pudo leer el certificado elegido.");
+        return;
+    }
+    m_certificadoCentralPem = QString::fromUtf8(archivo.readAll());
+    ui->lineCertificadoCentral->setText(QFileInfo(ruta).fileName());
 }
 
 void ConfigurarBdDialog::configurar() {
@@ -77,7 +100,8 @@ void ConfigurarBdDialog::configurar() {
         funcion == 1 ? DatabaseManager::Funcion::Central
         : funcion == 2 ? DatabaseManager::Funcion::Sucursal : DatabaseManager::Funcion::Unico,
         funcion == 2 ? ui->lineHostCentral->text().trimmed() : QString(),
-        funcion == 2 ? ui->spinPuertoCentral->value() : 0);
+        funcion == 2 ? ui->spinPuertoCentral->value() : 0,
+        funcion == 2 ? m_certificadoCentralPem : QString());
 
     if (funcion == 1) {
         // Se muestra una sola vez: las sucursales la piden al administrar usuarios.

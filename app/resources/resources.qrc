@@ -1,8 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>style.qss</file>
-        <!-- Certificado autofirmado del central, para validar TLS sin depender de una CA pública -->
-        <file alias="certs/central-ca.pem">certs/central-ca.pem</file>
         <!-- Esquema único de la BD, compartido con db/ y usado por el asistente de primer arranque -->
         <file alias="db/schema.sql">../../db/schema.sql</file>
         <file>logo.svg</file>
