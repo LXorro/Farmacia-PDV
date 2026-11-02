@@ -55,7 +55,8 @@ Simula la caída con `./demo.sh corte`; las ventas siguen y, tras
 - En el asistente, la función **Central** crea esa cuenta y muestra su
   contraseña una sola vez; **Sucursal** pide la dirección del central.
   (`demo.sh init` la crea con la contraseña `remoto_pw`.)
-- Pendiente: TLS en esa conexión (necesario al exponer el central en internet).
+- Esa conexión va sobre TLS cuando el central es un servidor real expuesto más
+  allá de la red local (ver «Central real sobre Tailscale» más abajo).
 
 ## Un solo escritor por tabla (lo hace cumplir la base)
 
@@ -100,6 +101,42 @@ recibe `REPLICA MONITOR`, que solo permite ver ese estado):
 
 Desde la sucursal solo se ve la replicación *de bajada* (central → sucursal); si la de subida
 va atrasada, se nota en el central.
+
+## Central real sobre Tailscale
+
+Para probar esta capa de autonomía con un central que no es `localhost` (p. ej.
+una VPS), la red privada se hace con [Tailscale](https://tailscale.com) en vez
+de abrir el puerto 3306 al público:
+
+- Central y sucursales se unen al mismo tailnet; MariaDB solo escucha ese
+  puerto en la interfaz `tailscale0` (`ufw` lo deja así de fábrica), nunca en
+  la IP pública.
+- El driver `QMYSQL` que usa la app **exige TLS siempre** para esta conexión
+  (no es opcional ni algo que se pueda desactivar desde `setConnectOptions`:
+  `MYSQL_OPT_SSL_MODE` no lo reconoce este driver, y sin certificado el
+  servidor responde «SSL is required, but the server does not support it»).
+  Por eso el central necesita TLS sí o sí, aunque el tráfico ya viaje cifrado
+  dentro del túnel de Tailscale.
+- En vez de un certificado autofirmado (que obliga a distribuirlo a cada
+  sucursal e importarlo al almacén de confianza de Windows — frágil y no
+  escala), se usa el certificado HTTPS que emite el propio Tailscale, firmado
+  por Let's Encrypt:
+
+  1. Activar **HTTPS Certificates** en <https://login.tailscale.com/admin/dns>
+     (una vez por tailnet).
+  2. En el central: `sudo tailscale cert <nombre-magicdns>.ts.net` — genera un
+     `.crt`/`.key` de verdad, confiado por cualquier sistema sin configuración
+     extra.
+  3. Apuntar `ssl-cert`/`ssl-key` de MariaDB a esos archivos y reiniciar.
+  4. En la app, la dirección del central (`central/host`, pantalla de
+     configuración) debe ser ese **nombre `.ts.net`**, no la IP de Tailscale —
+     el certificado es válido para ese nombre, no para la IP, y Windows
+     rechaza la conexión por «CN/SAN no coincide» si no coincide exactamente.
+- Ese certificado expira (Let's Encrypt, ~90 días); conviene automatizar su
+  renovación con un cron que repita el paso 2 y reinicie MariaDB.
+- Con esto, la app no necesita ningún manejo especial de certificados: el
+  código de conexión al central (`DatabaseManager::conectarCentral`) es TLS
+  normal, confiado por la cadena de certificación pública del sistema.
 
 ## Límites conocidos
 
