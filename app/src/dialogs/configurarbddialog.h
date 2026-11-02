@@ -16,11 +16,7 @@ public:
 private slots:
     void configurar();
     void actualizarFuncion();
-    void elegirCertificadoCentral();
 
 private:
     Ui::ConfigurarBdDialog *ui;
-    // Contenido del .pem elegido (no la ruta: se guarda el texto para no depender de que el
-    // archivo original siga existiendo).
-    QString m_certificadoCentralPem;
 };

@@ -1,13 +1,9 @@
 #include "databasemanager.h"
 #include "dbconfig.h"
 
-#include <QDir>
-#include <QFile>
-#include <QFileInfo>
 #include <QSettings>
 #include <QSqlError>
 #include <QSqlQuery>
-#include <QStandardPaths>
 
 DatabaseManager &DatabaseManager::instance() {
     static DatabaseManager mgr;
@@ -63,14 +59,12 @@ DatabaseManager::Funcion DatabaseManager::funcion() {
     return valor == "sucursal" ? Funcion::Sucursal : Funcion::Unico;
 }
 
-void DatabaseManager::guardarFuncion(Funcion funcion, const QString &hostCentral, int puertoCentral,
-                                     const QString &certificadoCentral) {
+void DatabaseManager::guardarFuncion(Funcion funcion, const QString &hostCentral, int puertoCentral) {
     QSettings ajustes;
     ajustes.setValue("nodo/funcion", funcion == Funcion::Central ? "central"
                                      : funcion == Funcion::Sucursal ? "sucursal" : "unico");
     ajustes.setValue("central/host", hostCentral);
     ajustes.setValue("central/puerto", puertoCentral);
-    ajustes.setValue("central/certificado", certificadoCentral);
 }
 
 int DatabaseManager::idSucursalNodo() {
@@ -97,20 +91,6 @@ bool DatabaseManager::centralConectado() const {
     return ping.exec("SELECT 1");
 }
 
-QString DatabaseManager::rutaCertificadoCentral() {
-    const QString pem = QSettings().value("central/certificado").toString();
-    if (pem.trimmed().isEmpty())
-        return QString();
-
-    const QString destino = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
-                             + "/central-ca.pem";
-    QDir().mkpath(QFileInfo(destino).absolutePath());
-    QFile archivo(destino);
-    if (archivo.open(QIODevice::WriteOnly | QIODevice::Truncate))
-        archivo.write(pem.toUtf8());
-    return destino;
-}
-
 bool DatabaseManager::conectarCentral(const QString &contrasena) {
     if (!esSucursal())
         return true;
@@ -127,14 +107,9 @@ bool DatabaseManager::conectarCentral(const QString &contrasena) {
     base.setDatabaseName(DbConfig::kDatabase);
     base.setUserName(DbConfig::kUsuarioRemoto);
     base.setPassword(contrasena);
-    // Sin conexión no debe congelar la ventana. El driver QMYSQL no soporta MYSQL_OPT_SSL_MODE
-    // (lo ignora en silencio); para aceptar el certificado autofirmado del central hay que darle
-    // SSL_CA con ese certificado exacto, que confía en él sin necesitar una CA pública.
-    QString opciones = QStringLiteral("MYSQL_OPT_CONNECT_TIMEOUT=5");
-    const QString certificado = rutaCertificadoCentral();
-    if (!certificado.isEmpty())
-        opciones += ";SSL_CA=" + certificado;
-    base.setConnectOptions(opciones);
+    // Sin conexión no debe congelar la ventana. Va sin TLS a propósito: el central solo acepta
+    // conexiones en la interfaz de Tailscale, que ya cifra el tráfico a nivel de red.
+    base.setConnectOptions(QStringLiteral("MYSQL_OPT_CONNECT_TIMEOUT=5"));
     if (!base.open()) {
         m_lastError = base.lastError().text();
         return false;
