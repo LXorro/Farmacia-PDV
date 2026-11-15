@@ -19,13 +19,20 @@ public:
 
 private slots:
     void guardar();
+    void actualizarTipo();
 
 private:
     void cargarEmpleados(int idSucursal);
+    void cargarPagosDelTicket();
 
     int m_idVenta = -1;
     int m_idTicket = -1;
     int m_cantidadMaxima = 0;
     double m_precioUnitario = 0;
+    // Cómo se pagó el ticket (para devolver el dinero por la misma vía): lo que aún puede reembolsarse.
+    double m_tarjetaPagada = 0;
+    double m_tarjetaDisponible = 0;
+    double m_otrosDisponible = 0;   // efectivo/transferencia pagados y aún no devueltos
+    bool m_pagoTarjetaHoy = false;
     Ui::DevolucionDialog *ui;
 };

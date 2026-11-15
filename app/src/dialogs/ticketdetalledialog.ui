@@ -3,7 +3,7 @@
  <class>TicketDetalleDialog</class>
  <widget class="QDialog" name="TicketDetalleDialog">
   <property name="geometry">
-   <rect><x>0</x><y>0</y><width>620</width><height>540</height></rect>
+   <rect><x>0</x><y>0</y><width>620</width><height>680</height></rect>
   </property>
   <property name="windowTitle"><string>Detalle del ticket</string></property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -37,6 +37,21 @@
      <column><property name="text"><string>Fecha</string></property></column>
      <column><property name="text"><string>Monto</string></property></column>
      <column><property name="text"><string>Método</string></property></column>
+     <column><property name="text"><string>Referencia</string></property></column>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelDevoluciones">
+     <property name="text"><string>Devoluciones:</string></property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="tableDevoluciones">
+     <column><property name="text"><string>Fecha</string></property></column>
+     <column><property name="text"><string>Importe</string></property></column>
+     <column><property name="text"><string>Reembolso</string></property></column>
+     <column><property name="text"><string>Estado</string></property></column>
+     <column><property name="text"><string>Folio</string></property></column>
     </widget>
    </item>
    <item>
@@ -48,6 +63,11 @@
      </item>
      <item>
       <spacer name="spacer"><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnCompletarReembolso">
+       <property name="text"><string>Registrar folio de reembolso</string></property>
+      </widget>
      </item>
      <item>
       <widget class="QPushButton" name="btnRegistrarAbono">

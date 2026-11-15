@@ -2,10 +2,12 @@
 #include "ui_ticketdetalledialog.h"
 #include "../database/databasemanager.h"
 #include "devoluciondialog.h"
+#include "pagotarjetadialog.h"
 #include "../util/iconos.h"
 #include "../util/tablas.h"
 
 #include <QDateTime>
+#include <QLineEdit>
 #include <QHeaderView>
 #include <QInputDialog>
 #include <QMessageBox>
@@ -40,11 +42,22 @@ TicketDetalleDialog::TicketDetalleDialog(QWidget *parent) : QDialog(parent), ui(
 
     connect(ui->btnRegistrarAbono, &QPushButton::clicked, this, &TicketDetalleDialog::registrarAbono);
     connect(ui->btnRegistrarDevolucion, &QPushButton::clicked, this, &TicketDetalleDialog::registrarDevolucion);
+    connect(ui->btnCompletarReembolso, &QPushButton::clicked, this, &TicketDetalleDialog::completarReembolso);
+    {
+        auto *h = ui->tableDevoluciones->horizontalHeader();
+        h->setStretchLastSection(true);
+        h->setSectionResizeMode(QHeaderView::ResizeToContents);
+    }
+    ui->tableDevoluciones->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableDevoluciones->setAlternatingRowColors(true);
+    ui->tableDevoluciones->verticalHeader()->setVisible(false);
+    Tablas::aplicar(ui->tableDevoluciones, "Sin devoluciones.");
 
     // El central consulta lo que venden las sucursales, no registra abonos ni devoluciones por ellas.
     if (DatabaseManager::funcion() == DatabaseManager::Funcion::Central) {
         ui->btnRegistrarAbono->setEnabled(false);
         ui->btnRegistrarDevolucion->setEnabled(false);
+        ui->btnCompletarReembolso->setEnabled(false);
     }
 
     ui->btnRegistrarAbono->setIcon(Iconos::nuevo());
@@ -107,7 +120,8 @@ void TicketDetalleDialog::cargarDatos() {
     }
 
     QSqlQuery pagos;
-    pagos.prepare("SELECT fecha_pago, monto, metodo_pago FROM Pagos WHERE id_ticket = :id ORDER BY fecha_pago");
+    pagos.prepare("SELECT fecha_pago, monto, metodo_pago, numero_referencia, ultimos_digitos FROM Pagos "
+                  "WHERE id_ticket = :id ORDER BY fecha_pago");
     pagos.bindValue(":id", m_idTicket);
     pagos.exec();
 
@@ -118,8 +132,39 @@ void TicketDetalleDialog::cargarDatos() {
         ui->tablePagos->setItem(fila, 0, new QTableWidgetItem(pagos.value(0).toDateTime().toString("dd/MM/yyyy HH:mm")));
         ui->tablePagos->setItem(fila, 1, new QTableWidgetItem(QString::number(pagos.value(1).toDouble(), 'f', 2)));
         ui->tablePagos->setItem(fila, 2, new QTableWidgetItem(pagos.value(2).toString()));
+        QString referencia = pagos.value(3).toString();
+        if (!pagos.value(4).isNull())
+            referencia += (referencia.isEmpty() ? "" : " · ") + QString("•••• %1").arg(pagos.value(4).toString());
+        ui->tablePagos->setItem(fila, 3, new QTableWidgetItem(referencia));
         ++fila;
     }
+
+    QSqlQuery devoluciones;
+    devoluciones.prepare("SELECT fecha_devolucion, total_devuelto, tipo_reembolso, modalidad_tarjeta, estado, "
+                         "referencia_reembolso FROM Devoluciones WHERE id_ticket = :id ORDER BY fecha_devolucion");
+    devoluciones.bindValue(":id", m_idTicket);
+    devoluciones.exec();
+    ui->tableDevoluciones->setRowCount(0);
+    fila = 0;
+    int pendientes = 0;
+    while (devoluciones.next()) {
+        ui->tableDevoluciones->insertRow(fila);
+        ui->tableDevoluciones->setItem(fila, 0, new QTableWidgetItem(devoluciones.value(0).toDateTime().toString("dd/MM/yyyy HH:mm")));
+        ui->tableDevoluciones->setItem(fila, 1, new QTableWidgetItem(QString::number(devoluciones.value(1).toDouble(), 'f', 2)));
+        QString reembolso = devoluciones.value(2).toString();
+        if (!devoluciones.value(3).isNull())
+            reembolso += " (" + devoluciones.value(3).toString() + ")";
+        ui->tableDevoluciones->setItem(fila, 2, new QTableWidgetItem(reembolso));
+        const QString estado = devoluciones.value(4).toString();
+        ui->tableDevoluciones->setItem(fila, 3, new QTableWidgetItem(estado == "solicitada" ? "pendiente en terminal" : estado));
+        ui->tableDevoluciones->setItem(fila, 4, new QTableWidgetItem(devoluciones.value(5).toString()));
+        if (estado == "solicitada" && devoluciones.value(2).toString() == "tarjeta")
+            ++pendientes;
+        ++fila;
+    }
+    ui->labelDevoluciones->setText(pendientes > 0
+        ? QString("Devoluciones: <b>%1 reembolso(s) a tarjeta pendiente(s)</b> — haz el reembolso en la terminal y registra el folio.").arg(pendientes)
+        : "Devoluciones:");
 }
 
 void TicketDetalleDialog::registrarAbono() {
@@ -147,11 +192,23 @@ void TicketDetalleDialog::registrarAbono() {
     if (!ok)
         return;
 
+    QString autorizacion, ultimosDigitos;
+    if (metodo == "tarjeta") {
+        PagoTarjetaDialog dialogoTarjeta(monto, this);
+        if (dialogoTarjeta.exec() != QDialog::Accepted)
+            return;
+        autorizacion = dialogoTarjeta.autorizacion();
+        ultimosDigitos = dialogoTarjeta.ultimosDigitos();
+    }
+
     QSqlQuery insertarPago;
-    insertarPago.prepare("INSERT INTO Pagos (id_ticket, monto, metodo_pago) VALUES (:ticket, :monto, :metodo)");
+    insertarPago.prepare("INSERT INTO Pagos (id_ticket, monto, metodo_pago, numero_referencia, ultimos_digitos) "
+                         "VALUES (:ticket, :monto, :metodo, :referencia, :ultimos)");
     insertarPago.bindValue(":ticket", m_idTicket);
     insertarPago.bindValue(":monto", monto);
     insertarPago.bindValue(":metodo", metodo);
+    insertarPago.bindValue(":referencia", autorizacion.isEmpty() ? QVariant(QMetaType(QMetaType::QString)) : QVariant(autorizacion));
+    insertarPago.bindValue(":ultimos", ultimosDigitos.isEmpty() ? QVariant(QMetaType(QMetaType::QString)) : QVariant(ultimosDigitos));
     if (!insertarPago.exec()) {
         QMessageBox::critical(this, "Error", "No se pudo registrar el abono:\n" + insertarPago.lastError().text());
         return;
@@ -184,4 +241,60 @@ void TicketDetalleDialog::registrarDevolucion() {
     dialog.setVenta(idVenta, m_idTicket, m_idSucursal, nombreProducto, disponibleParaDevolver, precioUnitario);
     if (dialog.exec() == QDialog::Accepted)
         cargarDatos();
+}
+
+// Un reembolso a tarjeta se hace en la terminal; aquí se captura el folio que imprime para darlo por completado.
+void TicketDetalleDialog::completarReembolso() {
+    QSqlQuery pendientes;
+    pendientes.prepare("SELECT id_devolucion, total_devuelto, modalidad_tarjeta FROM Devoluciones "
+                       "WHERE id_ticket = :id AND tipo_reembolso = 'tarjeta' AND estado = 'solicitada' "
+                       "ORDER BY fecha_devolucion");
+    pendientes.bindValue(":id", m_idTicket);
+    if (!pendientes.exec())
+        return;
+
+    QStringList opciones;
+    QList<int> ids;
+    while (pendientes.next()) {
+        ids << pendientes.value(0).toInt();
+        opciones << QString("$%1 — %2").arg(pendientes.value(1).toDouble(), 0, 'f', 2).arg(pendientes.value(2).toString());
+    }
+    if (ids.isEmpty()) {
+        QMessageBox::information(this, "Reembolso a tarjeta", "Este ticket no tiene reembolsos a tarjeta pendientes.");
+        return;
+    }
+
+    int indice = 0;
+    if (ids.size() > 1) {
+        bool ok = false;
+        const QString elegida = QInputDialog::getItem(this, "Reembolso a tarjeta", "¿Cuál reembolso ya hiciste en la terminal?",
+                                                      opciones, 0, false, &ok);
+        if (!ok)
+            return;
+        indice = opciones.indexOf(elegida);
+    }
+
+    QString folio;
+    while (true) {
+        bool ok = false;
+        folio = QInputDialog::getText(this, "Folio del reembolso",
+                                      "Folio o autorización que imprimió la terminal al cancelar/devolver:",
+                                      QLineEdit::Normal, folio, &ok).trimmed().toUpper();
+        if (!ok)
+            return;
+        if (PagoTarjetaDialog::folioValido(folio))
+            break;
+        QMessageBox::warning(this, "Folio", "Debe tener de 4 a 20 letras o números, sin espacios.");
+    }
+
+    QSqlQuery actualizar;
+    actualizar.prepare("UPDATE Devoluciones SET estado = 'completada', referencia_reembolso = :folio "
+                       "WHERE id_devolucion = :id AND estado = 'solicitada'");
+    actualizar.bindValue(":folio", folio);
+    actualizar.bindValue(":id", ids.at(indice));
+    if (!actualizar.exec()) {
+        QMessageBox::critical(this, "Error", "No se pudo registrar el folio:\n" + actualizar.lastError().text());
+        return;
+    }
+    cargarDatos();
 }

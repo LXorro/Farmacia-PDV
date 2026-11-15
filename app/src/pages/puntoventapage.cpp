@@ -1,4 +1,5 @@
 #include "puntoventapage.h"
+#include "../dialogs/pagotarjetadialog.h"
 #include "ui_puntoventapage.h"
 #include "../database/sesionactual.h"
 #include "../util/iconos.h"
@@ -231,6 +232,20 @@ void PuntoVentaPage::cobrar() {
         return;
     }
 
+    // Cobro con tarjeta: la terminal cobra; aquí se registra la autorización de su comprobante (antes de
+    // tocar la base: si se cancela, no se vende nada).
+    QString autorizacion, ultimosDigitos;
+    if (modalidad == "contado" && metodo == "tarjeta") {
+        double totalCarrito = 0;
+        for (const LineaCarrito &linea : m_carrito)
+            totalCarrito += linea.cantidad * linea.precioUnitario;
+        PagoTarjetaDialog dialogoTarjeta(totalCarrito, this);
+        if (dialogoTarjeta.exec() != QDialog::Accepted)
+            return;
+        autorizacion = dialogoTarjeta.autorizacion();
+        ultimosDigitos = dialogoTarjeta.ultimosDigitos();
+    }
+
     QSqlDatabase db = QSqlDatabase::database();
     if (!db.transaction()) {
         QMessageBox::critical(this, "Error", "No se pudo iniciar la transacción:\n" + db.lastError().text());
@@ -291,10 +306,13 @@ void PuntoVentaPage::cobrar() {
         double total = totalQuery.value(0).toDouble();
 
         QSqlQuery insertarPago;
-        insertarPago.prepare("INSERT INTO Pagos (id_ticket, monto, metodo_pago) VALUES (:ticket, :monto, :metodo)");
+        insertarPago.prepare("INSERT INTO Pagos (id_ticket, monto, metodo_pago, numero_referencia, ultimos_digitos) "
+                             "VALUES (:ticket, :monto, :metodo, :referencia, :ultimos)");
         insertarPago.bindValue(":ticket", idTicket);
         insertarPago.bindValue(":monto", total);
         insertarPago.bindValue(":metodo", metodo);
+        insertarPago.bindValue(":referencia", autorizacion.isEmpty() ? QVariant(QMetaType(QMetaType::QString)) : QVariant(autorizacion));
+        insertarPago.bindValue(":ultimos", ultimosDigitos.isEmpty() ? QVariant(QMetaType(QMetaType::QString)) : QVariant(ultimosDigitos));
         if (!insertarPago.exec()) {
             db.rollback();
             QMessageBox::critical(this, "Error", "No se pudo registrar el pago:\n" + insertarPago.lastError().text());

@@ -186,6 +186,9 @@ CREATE TABLE Pagos (
     metodo_pago        ENUM('efectivo', 'tarjeta', 'transferencia') NOT NULL,
     numero_referencia  VARCHAR(100),
     estado             ENUM('aplicado', 'pendiente', 'cancelado') NOT NULL DEFAULT 'aplicado',
+    -- Pago con tarjeta: numero_referencia guarda la AUTORIZACIÓN del comprobante de la terminal (6 caracteres
+    -- habituales) y aquí los últimos 4 dígitos de la tarjeta (opcional). La app no cobra: solo registra.
+    ultimos_digitos    CHAR(4) NULL,
     CONSTRAINT fk_pagos_ticket FOREIGN KEY (id_ticket) REFERENCES Tickets(id_ticket)
 ) ENGINE=InnoDB;
 
@@ -197,8 +200,12 @@ CREATE TABLE Devoluciones (
     fecha_devolucion  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     motivo            VARCHAR(200),
     total_devuelto    DECIMAL(10,2) NOT NULL DEFAULT 0,
-    tipo_reembolso    ENUM('efectivo', 'transferencia', 'saldo_a_favor', 'cambio') NOT NULL,
+    tipo_reembolso    ENUM('efectivo', 'transferencia', 'saldo_a_favor', 'cambio', 'tarjeta') NOT NULL,
     estado            ENUM('solicitada', 'aprobada', 'rechazada', 'completada') NOT NULL DEFAULT 'solicitada',
+    -- Reembolso a tarjeta: se hace en la terminal. 'cancelacion' = el mismo día, antes del cierre de lote;
+    -- 'devolucion' = después del cierre. Queda 'solicitada' hasta capturar el folio que imprime la terminal.
+    modalidad_tarjeta    ENUM('cancelacion', 'devolucion') NULL,
+    referencia_reembolso VARCHAR(100) NULL,
     CONSTRAINT fk_devoluciones_sucursal FOREIGN KEY (id_sucursal) REFERENCES Sucursales(id_sucursal),
     CONSTRAINT fk_devoluciones_ticket FOREIGN KEY (id_ticket) REFERENCES Tickets(id_ticket),
     CONSTRAINT fk_devoluciones_empleado FOREIGN KEY (id_empleado) REFERENCES Empleados(id_empleado)

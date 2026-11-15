@@ -89,6 +89,15 @@ Detalles: el permiso se guarda en `Permisos_Temporales` (la escribe el central y
 
 **Limitación:** la restricción vive en la aplicación, no en la base de datos. MariaDB solo conoce una cuenta por equipo (`farmacia_app`), así que no puede distinguir qué empleado escribe; alguien con acceso directo a la base del equipo podría saltársela. Igual que los roles admin/empleado.
 
+### Pagos y reembolsos con tarjeta
+
+La app **no cobra ni reembolsa nada con tarjeta**: la terminal lo hace y la app registra y controla.
+- **Al cobrar con tarjeta** (contado o abono) se captura la **autorización** del comprobante (4-20 caracteres alfanuméricos; normalmente 6) y, opcionalmente, los **últimos 4 dígitos**. Se guardan en `Pagos.numero_referencia` y `Pagos.ultimos_digitos`.
+- **Un ticket pagado con tarjeta se devuelve a la tarjeta:** la devolución en efectivo o transferencia solo se permite por la parte que se pagó así; no puede salir en efectivo lo que se cobró con tarjeta (el cargo seguiría en la cuenta del cliente). `cambio` y `saldo_a_favor` no mueven dinero y siguen permitidos.
+- **Reembolso a tarjeta en dos pasos:** la devolución se registra con la *modalidad* (`cancelacion`: mismo día, antes del cierre de lote de la terminal; `devolucion`: después del cierre). Si se captura el folio de la terminal queda `completada`; si no, queda `solicitada` («pendiente en terminal») hasta que se registre el folio desde el detalle del ticket (botón «Registrar folio de reembolso»).
+- El stock se reintegra al registrar la devolución (el producto ya volvió físicamente), aunque el reembolso siga pendiente.
+- **No se sabe** si la comisión de la terminal se reembolsa: depende del contrato con el banco o procesador.
+
 Un empleado de otra sucursal solo opera con una *asignación temporal* vigente autorizada por un admin, e iniciando sesión en un equipo de esa sucursal. La barra de estado muestra el estado de la replicación (`SHOW ALL REPLICAS STATUS`).
 
 ## 7. Estructura del repositorio
@@ -107,7 +116,7 @@ Plan_Proyecto.md         Alcance y diseño · Farmacia_actualizado.md: esquema b
 ## 8. Operación
 
 - **Preparar el central** (una vez, o al cambiar permisos): `ssh ubuntu@<central> 'sudo bash -s' < db/distribuido/real/preparar-central.sh` (acepta `PW_REGISTRO=…` para conservar la contraseña de registro).
-- **Migrar una base existente:** `sudo db/migraciones/aplicar-002.sh nodo` (precios por sucursal) y `aplicar-003.sh nodo` (permisos temporales y bitácora) en cada equipo, y `…central` en el servidor; luego `preparar-central.sh` (permisos de las cuentas) y, en cada equipo, **`preparar-nodo.sh <ranura>` otra vez** para que `Permisos_Temporales` entre en la lista de tablas que replica. Debe aplicarse en **todos** los nodos antes de cargar datos nuevos, porque con replicación por filas los esquemas no pueden diferir.
+- **Migrar una base existente:** `sudo db/migraciones/aplicar-002.sh nodo` (precios por sucursal) y `aplicar-003.sh nodo` (permisos temporales y bitácora) en cada equipo, y `…central` en el servidor; `aplicar-004.sh` (pagos y reembolsos con tarjeta; **en todos los nodos y el central antes de usar la versión nueva de la app**: ningún nodo debe guardar `tarjeta` antes de que todos lo admitan), luego `preparar-central.sh` (permisos de las cuentas) y, en cada equipo, **`preparar-nodo.sh <ranura>` otra vez** para que `Permisos_Temporales` entre en la lista de tablas que replica. Debe aplicarse en **todos** los nodos antes de cargar datos nuevos, porque con replicación por filas los esquemas no pueden diferir.
 - **Agregar un equipo:**
   1. Unirlo a **tu tailnet** (invitarlo con su propio correo en Tailscale → Users; *compartir solo el nodo* no basta, porque el central no puede iniciar conexiones hacia un nodo de otro tailnet y la replicación de subida fallaría).
   2. Preparar su MariaDB local (`preparar-nodo.sh` o el `my.cnf` del asistente).
@@ -144,7 +153,7 @@ Plan_Proyecto.md         Alcance y diseño · Farmacia_actualizado.md: esquema b
 
 **Pendiente decidido (anotado por el usuario)**
 - **Reporte diario de movimientos** hechos en cada sucursal (ventas, cambios, devoluciones…): por implementar.
-- **Devoluciones de pagos con tarjeta:** el usuario pidió «abortar las devoluciones que se hicieron en pagos con tarjeta» **después** del cambio de permisos. Falta aclarar si significa *bloquear* en adelante las devoluciones de pagos con tarjeta o *anular* las ya hechas (hoy `Pagos` guarda el método de pago y las devoluciones reintegran stock y registran el monto).
+- Pagos y reembolsos con tarjeta: implementado (ver sección 6). Falta probarlo en la interfaz. Las devoluciones en efectivo de pagos con tarjeta **hechas antes** de este cambio no se anulan ni se marcan: quedan como estaban.
 
 **Ideas abiertas**
 - Aviso en el asistente cuando la dirección del central sea una IP.

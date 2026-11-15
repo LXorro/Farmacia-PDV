@@ -17,6 +17,7 @@ public:
 private slots:
     void registrarAbono();
     void registrarDevolucion();
+    void completarReembolso();
 
 private:
     void cargarDatos();

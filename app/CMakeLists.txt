@@ -96,6 +96,8 @@ add_executable(FarmaciaApp
     src/dialogs/lotedialog.h
     src/dialogs/lotedialog.cpp
     src/dialogs/lotedialog.ui
+    src/dialogs/pagotarjetadialog.h
+    src/dialogs/pagotarjetadialog.cpp
     src/dialogs/devoluciondialog.h
     src/dialogs/devoluciondialog.cpp
     src/dialogs/devoluciondialog.ui

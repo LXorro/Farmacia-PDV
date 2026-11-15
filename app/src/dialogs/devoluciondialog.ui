@@ -55,6 +55,7 @@
        <item><property name="text"><string>transferencia</string></property></item>
        <item><property name="text"><string>saldo_a_favor</string></property></item>
        <item><property name="text"><string>cambio</string></property></item>
+       <item><property name="text"><string>tarjeta</string></property></item>
       </widget>
      </item>
      <item row="6" column="0">
@@ -62,6 +63,29 @@
      </item>
      <item row="6" column="1">
       <widget class="QLineEdit" name="lineMotivo"/>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="labelModalidad"><property name="text"><string>Reembolso a tarjeta:</string></property></widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QComboBox" name="comboModalidad">
+       <item><property name="text"><string>Cancelación (mismo día, antes del cierre de lote)</string></property></item>
+       <item><property name="text"><string>Devolución (después del cierre de lote)</string></property></item>
+      </widget>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLabel" name="labelFolio"><property name="text"><string>Folio de la terminal:</string></property></widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="QLineEdit" name="lineFolio">
+       <property name="placeholderText"><string>Si aún no lo tienes, déjalo vacío (queda pendiente)</string></property>
+      </widget>
+     </item>
+     <item row="9" column="0" colspan="2">
+      <widget class="QLabel" name="labelAvisoTarjeta">
+       <property name="wordWrap"><bool>true</bool></property>
+       <property name="text"><string/></property>
+      </widget>
      </item>
     </layout>
    </item>
