@@ -63,6 +63,7 @@ Farmacia, tal como está en `Farmacia_actualizado.md`, es un esquema de una sola
 
 - **Central (admin, baja a las sucursales):** Sucursales, Empleados, Usuarios, Asignaciones, Categorías, Proveedores y Productos (identidad del producto + **precio sugerido**).
 - **Sucursal (empleados, sube al central):** Clientes, Lotes (con su **costo unitario**: cada compra cuesta distinto), Inventario, Tickets, Ventas, Pagos, Devoluciones y **`Productos_Sucursal`** (precio propio, si la sucursal maneja el producto y su mínimo de existencias). Sin fila, se vende al precio sugerido. `Ventas.precio_unitario` guarda lo cobrado, así que cambiar un precio no altera tickets viejos.
+- **Permisos temporales:** `Permisos_Temporales` (central → sucursales) concede a un empleado el rol «encargado» por 1-3 días; sin él solo hace lo esencial de un vendedor. `Bitacora_Cambios` (sucursal → central) registra quién cambió precios y lotes. Detalle en `ESTADO_PROYECTO.md`; migración `db/migraciones/003_permisos_y_bitacora.sql`.
 - El catálogo es único porque `codigo_barras` es único: con varios escritores dos sucursales podrían crear el mismo código a la vez. Migración de bases existentes: `db/migraciones/002_precios_por_sucursal.sql`.
 
 ## 4. Demo de BD distribuidas — implementada y verificada (`db/distribuido/`)
