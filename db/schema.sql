@@ -255,6 +255,47 @@ CREATE TABLE Asignaciones_Temporales (
     CONSTRAINT fk_asig_autoriza  FOREIGN KEY (id_autoriza)  REFERENCES Usuarios(id_usuario) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
+-- ---------------------------------------------------------------------
+-- Permisos temporales: un admin concede a un empleado el rol «encargado» por 1, 2 o 3 días
+-- (24/48/72 h). Mientras está vigente, el empleado puede fijar precios de su sucursal y dar de
+-- alta/editar lotes; sin él, solo opera lo esencial de un vendedor. Se captura en el central y
+-- baja a las sucursales; el vencimiento se evalúa localmente (también sin conexión).
+-- Las fechas van en UTC (el central y las sucursales pueden estar en zonas horarias distintas).
+-- ---------------------------------------------------------------------
+CREATE TABLE Permisos_Temporales (
+    id_permiso    INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario    INT NOT NULL,
+    rol_otorgado  ENUM('encargado') NOT NULL DEFAULT 'encargado',
+    fecha_inicio  DATETIME NOT NULL,          -- UTC
+    fecha_fin     DATETIME NOT NULL,          -- UTC
+    id_autoriza   INT NULL,
+    estado        ENUM('vigente', 'revocado') NOT NULL DEFAULT 'vigente',
+    INDEX idx_permisos_usuario (id_usuario, estado, fecha_fin),
+    CONSTRAINT ck_permisos_duracion CHECK (fecha_fin > fecha_inicio AND TIMESTAMPDIFF(HOUR, fecha_inicio, fecha_fin) <= 72),
+    CONSTRAINT fk_permisos_usuario  FOREIGN KEY (id_usuario)  REFERENCES Usuarios(id_usuario),
+    CONSTRAINT fk_permisos_autoriza FOREIGN KEY (id_autoriza) REFERENCES Usuarios(id_usuario) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- Bitácora de cambios: quién cambió un precio o un lote de su sucursal, cuándo y bajo qué
+-- autorización. La escribe la sucursal y sube al central. Sin FK a Usuarios: guarda el nombre
+-- tal como era al momento del cambio.
+-- ---------------------------------------------------------------------
+CREATE TABLE Bitacora_Cambios (
+    id_bitacora     INT AUTO_INCREMENT PRIMARY KEY,
+    id_sucursal     INT NOT NULL,
+    id_usuario      INT NULL,
+    nombre_usuario  VARCHAR(50) NOT NULL,
+    fecha           DATETIME NOT NULL,        -- UTC
+    accion          VARCHAR(30) NOT NULL,     -- precio_sucursal | lote_alta | lote_edicion
+    entidad         VARCHAR(30) NOT NULL,
+    id_registro     VARCHAR(40) NOT NULL,
+    detalle         TEXT,
+    con_permiso     BOOLEAN NOT NULL DEFAULT FALSE,   -- hecho con un permiso temporal (no por un admin)
+    INDEX idx_bitacora_fecha (id_sucursal, fecha),
+    CONSTRAINT fk_bitacora_sucursal FOREIGN KEY (id_sucursal) REFERENCES Sucursales(id_sucursal)
+) ENGINE=InnoDB;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- =====================================================================

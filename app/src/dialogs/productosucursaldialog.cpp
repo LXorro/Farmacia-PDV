@@ -1,4 +1,6 @@
 #include "productosucursaldialog.h"
+#include "../database/sesionactual.h"
+#include "../util/bitacora.h"
 
 #include <QCheckBox>
 #include <QDialogButtonBox>
@@ -13,7 +15,7 @@
 
 ProductoSucursalDialog::ProductoSucursalDialog(int idProducto, int idSucursal, const QString &nombreProducto,
                                                double precioSugerido, QWidget *parent)
-    : QDialog(parent), m_idProducto(idProducto), m_idSucursal(idSucursal) {
+    : QDialog(parent), m_idProducto(idProducto), m_idSucursal(idSucursal), m_nombre(nombreProducto) {
     setWindowTitle("Producto en esta sucursal");
 
     m_precio = new QDoubleSpinBox(this);
@@ -50,12 +52,31 @@ ProductoSucursalDialog::ProductoSucursalDialog(int idProducto, int idSucursal, c
         m_precio->setValue(actual.value(0).isNull() ? 0.0 : actual.value(0).toDouble());
         m_activo->setChecked(actual.value(1).toBool());
         m_minimo->setValue(actual.value(2).toInt());
+        m_antes = descripcion(actual.value(0).isNull() ? 0.0 : actual.value(0).toDouble(), actual.value(1).toBool(),
+                              actual.value(2).toInt());
     } else {
         m_activo->setChecked(true);
     }
 }
 
+QString ProductoSucursalDialog::descripcion(double precio, bool activo, int minimo) {
+    return QString("precio %1, %2, mínimo %3")
+        .arg(precio > 0.0 ? QString("$%1").arg(precio, 0, 'f', 2) : QString("sugerido"),
+             activo ? "lo maneja" : "no lo maneja")
+        .arg(minimo);
+}
+
 void ProductoSucursalDialog::guardar() {
+    // El permiso pudo vencer o revocarse con la ventana abierta.
+    if (!SesionActual::instance().puedeGestionarSucursal()) {
+        QMessageBox::warning(this, "Sin permiso",
+                             "Tu permiso temporal ya no está vigente. Pide a un administrador que lo renueve.");
+        reject();
+        return;
+    }
+
+    QSqlDatabase base = QSqlDatabase::database();
+    base.transaction();
     QSqlQuery query;
     query.prepare("INSERT INTO Productos_Sucursal (id_producto, id_sucursal, precio_venta, activo, stock_minimo) "
                   "VALUES (:p, :s, :precio, :activo, :minimo) "
@@ -67,9 +88,17 @@ void ProductoSucursalDialog::guardar() {
                                                         : QVariant(QMetaType(QMetaType::Double)));
     query.bindValue(":activo", m_activo->isChecked());
     query.bindValue(":minimo", m_minimo->value());
-    if (!query.exec()) {
-        QMessageBox::critical(this, "Error", "No se pudo guardar:\n" + query.lastError().text());
+    QString errorBitacora;
+    const bool guardado = query.exec();
+    const QString despues = descripcion(m_precio->value(), m_activo->isChecked(), m_minimo->value());
+    if (!guardado || !Bitacora::registrar("precio_sucursal", "Productos_Sucursal",
+                                          QString("%1:%2").arg(m_idProducto).arg(m_idSucursal),
+                                          QString("%1: %2 → %3").arg(m_nombre, m_antes, despues), errorBitacora)) {
+        base.rollback();
+        QMessageBox::critical(this, "Error",
+                              "No se pudo guardar:\n" + (guardado ? errorBitacora : query.lastError().text()));
         return;
     }
+    base.commit();
     accept();
 }

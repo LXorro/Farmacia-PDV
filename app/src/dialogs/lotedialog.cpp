@@ -1,6 +1,7 @@
 #include "lotedialog.h"
 #include "ui_lotedialog.h"
 #include "../database/sesionactual.h"
+#include "../util/bitacora.h"
 
 #include <QDate>
 #include <QMessageBox>
@@ -93,6 +94,14 @@ void LoteDialog::cargarLote() {
     ui->spinCantidad->setMinimum(0);
     ui->spinCantidad->setValue(query.value(4).toInt());
     ui->spinCosto->setValue(query.value(5).toDouble());
+    m_antes = descripcionLote();
+}
+
+QString LoteDialog::descripcionLote() const {
+    return QString("lote %1, caduca %2, disponible %3, costo $%4")
+        .arg(ui->lineNumeroLote->text().trimmed(), ui->dateFechaCaducidad->date().toString("dd/MM/yyyy"))
+        .arg(ui->spinCantidad->value())
+        .arg(ui->spinCosto->value(), 0, 'f', 2);
 }
 
 void LoteDialog::guardar() {
@@ -101,6 +110,16 @@ void LoteDialog::guardar() {
         return;
     }
 
+    // El permiso pudo vencer o revocarse con la ventana abierta.
+    if (!SesionActual::instance().puedeGestionarSucursal()) {
+        QMessageBox::warning(this, "Sin permiso",
+                             "Tu permiso temporal ya no está vigente. Pide a un administrador que lo renueve.");
+        reject();
+        return;
+    }
+
+    QSqlDatabase base = QSqlDatabase::database();
+    base.transaction();
     QSqlQuery query;
     if (m_idLote < 0) {
         query.prepare(
@@ -122,10 +141,21 @@ void LoteDialog::guardar() {
     query.bindValue(":costo", ui->spinCosto->value());
     query.bindValue(":estado", estadoDerivado());
 
-    if (!query.exec()) {
-        QMessageBox::critical(this, "Error", "No se pudo guardar el lote:\n" + query.lastError().text());
+    const bool alta = m_idLote < 0;
+    const bool guardado = query.exec();
+    const QString idRegistro = QString::number(alta ? query.lastInsertId().toInt() : m_idLote);
+    QString errorBitacora;
+    const QString producto = ui->comboProducto->currentText();
+    const QString detalle = alta ? QString("%1: nuevo, %2").arg(producto, descripcionLote())
+                                 : QString("%1: %2 → %3").arg(producto, m_antes, descripcionLote());
+    if (!guardado || !Bitacora::registrar(alta ? "lote_alta" : "lote_edicion", "Lotes", idRegistro, detalle,
+                                          errorBitacora)) {
+        base.rollback();
+        QMessageBox::critical(this, "Error",
+                              "No se pudo guardar el lote:\n" + (guardado ? errorBitacora : query.lastError().text()));
         return;
     }
+    base.commit();
 
     accept();
 }

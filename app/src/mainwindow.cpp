@@ -22,6 +22,8 @@
 #include "pages/ticketspage.h"
 #include "pages/usuariospage.h"
 #include "pages/asignacionespage.h"
+#include "pages/bitacorapage.h"
+#include "pages/permisospage.h"
 #include "database/databasemanager.h"
 #include "database/estadosync.h"
 
@@ -96,6 +98,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
         ui->listMenu->addItem(new QListWidgetItem(Iconos::usuarios(), "Usuarios"));
         ui->stackedWidget->addWidget(new UsuariosPage(this));
+
+        // Permisos temporales (rol «encargado», 1-3 días): los concede el admin desde el central.
+        ui->listMenu->addItem(new QListWidgetItem(Iconos::usuarios(), "Permisos"));
+        ui->stackedWidget->addWidget(sucursal ? soloLectura(new PermisosPage(this)) : new PermisosPage(this));
+
+        ui->listMenu->addItem(new QListWidgetItem(Iconos::tickets(), "Bitácora"));
+        ui->stackedWidget->addWidget(new BitacoraPage(this));
 
         // Asignaciones temporales entre sucursales: solo existen en una instalación con central.
         if (central || sucursal) {

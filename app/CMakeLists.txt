@@ -23,6 +23,9 @@ add_executable(FarmaciaApp
     src/database/estadosync.cpp
     src/database/sesionactual.h
     src/database/sesionactual.cpp
+    src/util/bitacora.h
+    src/util/bitacora.cpp
+    src/util/modeloutc.h
     src/util/passwordutil.h
     src/util/passwordutil.cpp
     src/util/iconos.h
@@ -61,6 +64,12 @@ add_executable(FarmaciaApp
     src/pages/asignacionespage.h
     src/pages/asignacionespage.cpp
     src/pages/asignacionespage.ui
+    src/pages/permisospage.h
+    src/pages/permisospage.cpp
+    src/pages/permisospage.ui
+    src/pages/bitacorapage.h
+    src/pages/bitacorapage.cpp
+    src/pages/bitacorapage.ui
     src/pages/usuariospage.h
     src/pages/usuariospage.cpp
     src/pages/usuariospage.ui

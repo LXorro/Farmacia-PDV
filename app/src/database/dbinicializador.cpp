@@ -14,9 +14,9 @@
 namespace DbInicializador {
 
 const QStringList kTablasDelCentral = {"Sucursales", "Empleados", "Usuarios", "Asignaciones_Temporales",
-                                       "Categorias", "Proveedores", "Productos"};
+                                       "Permisos_Temporales", "Categorias", "Proveedores", "Productos"};
 const QStringList kTablasDeSucursal = {"Clientes", "Lotes", "Inventario", "Tickets", "Ventas", "Pagos",
-                                       "Devoluciones", "Detalle_Devolucion", "Productos_Sucursal"};
+                                       "Devoluciones", "Detalle_Devolucion", "Productos_Sucursal", "Bitacora_Cambios"};
 
 QStringList partirSentencias(const QString &sql) {
     QStringList sentencias;
@@ -215,7 +215,9 @@ int ranuraDeSucursal(int idSucursal) {
 QString configuracionNodo(int ranura) {
     QString cnf = "[mysqld]\n";
     cnf += QString("server-id=%1\ngtid_domain_id=%1\n").arg(DbConfig::kServerIdBase + ranura);
-    cnf += "log-bin=farmacia-bin\nbinlog_format=ROW\n";
+    // Solo «farmacia» entra al binlog: el equipo puede tener otras bases (con ROW se filtra por la base de la
+    // tabla) y el central no debe recibir ni intentar aplicar cambios ajenos al proyecto.
+    cnf += QString("log-bin=farmacia-bin\nbinlog_format=ROW\nbinlog-do-db=%1\n").arg(DbConfig::kDatabase);
     cnf += QString("auto_increment_increment=%1\nauto_increment_offset=%2\n").arg(DbConfig::kIncrementoAutoinc).arg(ranura);
     cnf += "bind-address=0.0.0.0\n";   // el central tiene que alcanzar este equipo (Tailscale)
     for (const QString &tabla : kTablasDelCentral)
@@ -395,6 +397,8 @@ bool enlazarConCentral(const QString &host, int puerto, const QString &adminUsua
     if (!ej(c, QString("CHANGE MASTER %1 TO MASTER_HOST=%2, MASTER_PORT=%3, MASTER_USER=%4, MASTER_PASSWORD=%5, "
                        "MASTER_CONNECT_RETRY=5%6")
                     .arg(q(nombreConexion), q(miIp)).arg(puerto).arg(q(cuentaSube), q(contrasenaSube), posicion5))
+        // Segunda barrera: aunque un nodo registre otras bases, el central solo aplica «farmacia».
+        || !ej(c, QString("SET GLOBAL %1.replicate_do_db = %2").arg(nombreConexion, q(DbConfig::kDatabase)))
         || !ej(c, QString("START SLAVE %1").arg(q(nombreConexion))))
         return false;
 

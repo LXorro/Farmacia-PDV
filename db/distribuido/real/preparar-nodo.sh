@@ -13,13 +13,14 @@ if   [ -d /etc/my.cnf.d ];                    then DESTINO=/etc/my.cnf.d/farmaci
 elif [ -d /etc/mysql/mariadb.conf.d ];        then DESTINO=/etc/mysql/mariadb.conf.d/60-farmacia-nodo.cnf
 else echo "No encuentro el directorio de configuración de MariaDB." >&2; exit 1; fi
 
-TABLAS_DEL_CENTRAL="Sucursales Empleados Usuarios Asignaciones_Temporales Categorias Proveedores Productos"
+TABLAS_DEL_CENTRAL="Sucursales Empleados Usuarios Asignaciones_Temporales Permisos_Temporales Categorias Proveedores Productos"
 {
   echo "[mysqld]"
   echo "server-id=$((10 + RANURA))"
   echo "gtid_domain_id=$((10 + RANURA))"
   echo "log-bin=farmacia-bin"
   echo "binlog_format=ROW"
+  echo "binlog-do-db=farmacia"   # solo «farmacia» al binlog: el equipo puede tener otras bases
   echo "auto_increment_increment=10"
   echo "auto_increment_offset=$RANURA"
   echo "bind-address=0.0.0.0"

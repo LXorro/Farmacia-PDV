@@ -18,9 +18,13 @@ private slots:
     void guardar();
 
 private:
+    static QString descripcion(double precio, bool activo, int minimo);
     int m_idProducto;
     int m_idSucursal;
     QDoubleSpinBox *m_precio;
     QCheckBox *m_activo;
     QSpinBox *m_minimo;
+    QString m_nombre;
+    // Valores al abrir, para dejar constancia del cambio en la bitácora.
+    QString m_antes = "sin configuración propia";
 };

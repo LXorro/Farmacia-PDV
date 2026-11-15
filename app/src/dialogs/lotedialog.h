@@ -21,8 +21,10 @@ private:
     void cargarCombos();
     void cargarLote();
     QString estadoDerivado() const;
+    QString descripcionLote() const;
     void actualizarEstado();
 
     int m_idLote = -1;
+    QString m_antes;   // cómo estaba el lote al abrir (para la bitácora)
     Ui::LoteDialog *ui;
 };

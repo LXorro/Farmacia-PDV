@@ -13,8 +13,8 @@ set -euo pipefail
 
 HOSTS="100.64.0.0/255.192.0.0"
 DB=farmacia
-ESCRIBE="Sucursales Empleados Usuarios Asignaciones_Temporales Categorias Proveedores Productos"
-LEE="Clientes Lotes Inventario Tickets Ventas Pagos Devoluciones Detalle_Devolucion Productos_Sucursal"
+ESCRIBE="Sucursales Empleados Usuarios Asignaciones_Temporales Permisos_Temporales Categorias Proveedores Productos"
+LEE="Clientes Lotes Inventario Tickets Ventas Pagos Devoluciones Detalle_Devolucion Productos_Sucursal Bitacora_Cambios"
 PW_REGISTRO="${PW_REGISTRO:-$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 24)}"
 
 {

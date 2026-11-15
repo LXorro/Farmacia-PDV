@@ -38,11 +38,6 @@ ProductosPage::ProductosPage(QWidget *parent) : QWidget(parent), ui(new Ui::Prod
     ui->btnEliminar->setIcon(Iconos::eliminar());
     ui->btnRefrescar->setIcon(Iconos::refrescar());
 
-    // El precio, si se maneja y el mínimo de existencias los decide cada sucursal (no el catálogo):
-    // lo edita quien trabaja sobre la base de una sucursal, nunca desde el central.
-    ui->btnPrecioSucursal->setEnabled(SesionActual::instance().idSucursal() >= 0
-                                      && !SesionActual::instance().veTodasLasSucursales());
-
     // Productos es catálogo maestro: solo el admin (central) lo edita.
     if (!SesionActual::instance().esAdmin() || DatabaseManager::esSucursal()) {
         ui->btnNuevo->setEnabled(false);
@@ -58,6 +53,15 @@ ProductosPage::~ProductosPage() {
 }
 
 void ProductosPage::refrescar() {
+    // El precio, si se maneja y el mínimo de existencias los decide cada sucursal, pero solo quien tenga
+    // permiso (un admin, o un empleado con el permiso temporal vigente). Se reevalúa en cada refresco.
+    const auto &sesion = SesionActual::instance();
+    const bool enSucursal = DatabaseManager::funcion() != DatabaseManager::Funcion::Central && sesion.idSucursal() >= 0;
+    const bool puede = enSucursal && sesion.puedeGestionarSucursal();
+    ui->btnPrecioSucursal->setEnabled(puede);
+    ui->btnPrecioSucursal->setToolTip(enSucursal && !puede
+                                          ? "Requiere un permiso temporal concedido por un administrador." : QString());
+
     // Existencias y disponibilidad se derivan de Lotes (no vencidos); un empleado
     // solo ve las de su sucursal, el admin el total.
     QString filtroSucursal;

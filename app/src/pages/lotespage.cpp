@@ -1,6 +1,7 @@
 #include "lotespage.h"
 #include "ui_lotespage.h"
 #include "../dialogs/lotedialog.h"
+#include "../database/databasemanager.h"
 #include "../database/sesionactual.h"
 #include "../util/iconos.h"
 #include "../util/tablas.h"
@@ -39,6 +40,16 @@ LotesPage::~LotesPage() {
 }
 
 void LotesPage::refrescar() {
+    // Alta y edición de lotes: admin, o empleado con permiso temporal vigente. En el central (consulta) nadie.
+    const bool puede = DatabaseManager::funcion() != DatabaseManager::Funcion::Central
+                       && SesionActual::instance().puedeGestionarSucursal();
+    ui->btnNuevo->setEnabled(puede);
+    ui->btnEditar->setEnabled(puede);
+    const QString aviso = !puede && DatabaseManager::funcion() != DatabaseManager::Funcion::Central
+                              ? "Requiere un permiso temporal concedido por un administrador." : QString();
+    ui->btnNuevo->setToolTip(aviso);
+    ui->btnEditar->setToolTip(aviso);
+
     QString sql =
         "SELECT l.id_lote AS 'ID', p.nombre AS 'Producto', s.nombre AS 'Sucursal', "
         "l.numero_lote AS 'N.º de lote', l.fecha_caducidad AS 'Caducidad', "

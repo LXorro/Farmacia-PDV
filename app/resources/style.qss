@@ -120,6 +120,13 @@ QPushButton#btnEliminar:hover, QPushButton#btnCancelarVenta:hover {
 QPushButton#btnEliminar:pressed, QPushButton#btnCancelarVenta:pressed {
     background: #8c2a1f;
 }
+/* Sin esta regla, el selector por nombre (más específico) le gana a QPushButton:disabled y el botón
+   deshabilitado se vería igual de intenso que uno activo. */
+QPushButton#btnEliminar:disabled, QPushButton#btnCancelarVenta:disabled {
+    color: #ffffff;
+    background: #e0b4ae;
+    border-color: #e0b4ae;
+}
 
 /* Cuadrícula de accesos rápidos del Inicio: mismo color, alineado a la izquierda */
 QPushButton#btnPuntoVenta, QPushButton#btnProductos, QPushButton#btnClientes,

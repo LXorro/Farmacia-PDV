@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>BitacoraPage</class>
+ <widget class="QWidget" name="BitacoraPage">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>860</width><height>420</height></rect>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="labelAyuda">
+     <property name="wordWrap"><bool>true</bool></property>
+     <property name="text"><string>Cambios de precios y lotes hechos en las sucursales: quién, cuándo y con qué autorización. Los últimos 500 movimientos.</string></property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="botonesLayout">
+     <item><spacer name="spacer"><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+     <item><widget class="QPushButton" name="btnRefrescar"><property name="text"><string>Refrescar</string></property></widget></item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTableView" name="tableView"/>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
