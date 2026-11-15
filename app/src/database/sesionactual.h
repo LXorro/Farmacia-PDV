@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QDateTime>
 #include <QString>
 
 class SesionActual {
@@ -20,6 +21,8 @@ public:
     // sucursal y dar de alta/editar lotes. Se consulta a la base cada vez (vence solo, aunque no
     // haya conexión con el central, porque la tabla ya está replicada en el equipo).
     bool tienePermisoTemporal() const;
+    // Hasta cuándo (hora local) dura el permiso temporal vigente; fecha inválida si no hay.
+    QDateTime vencePermisoTemporal() const;
     // Un admin siempre puede; un empleado, solo con el permiso temporal vigente.
     bool puedeGestionarSucursal() const;
 

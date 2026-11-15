@@ -1,6 +1,8 @@
 #pragma once
 
+#include <QHash>
 #include <QMainWindow>
+#include <QString>
 
 namespace Ui {
 class MainWindow;
@@ -21,4 +23,5 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QLabel *m_labelSync = nullptr;
+    QHash<QString, QString> m_ayudaPagina;   // texto de ayuda bajo el título de cada pantalla
 };

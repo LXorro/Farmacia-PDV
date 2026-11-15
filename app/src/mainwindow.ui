@@ -69,6 +69,13 @@
         </spacer>
        </item>
        <item>
+        <widget class="QLabel" name="labelInsignia">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="btnMinimizar">
          <property name="minimumSize">
           <size><width>46</width><height>36</height></size>
@@ -137,7 +144,38 @@
        </widget>
       </item>
       <item>
-       <widget class="QStackedWidget" name="stackedWidget"/>
+       <layout class="QVBoxLayout" name="layoutContenido">
+        <property name="spacing"><number>0</number></property>
+        <property name="leftMargin"><number>0</number></property>
+        <property name="topMargin"><number>0</number></property>
+        <property name="rightMargin"><number>0</number></property>
+        <property name="bottomMargin"><number>0</number></property>
+        <item>
+         <widget class="QWidget" name="encabezadoPagina">
+          <layout class="QVBoxLayout" name="encabezadoLayout">
+           <property name="spacing"><number>2</number></property>
+           <property name="leftMargin"><number>14</number></property>
+           <property name="topMargin"><number>14</number></property>
+           <property name="rightMargin"><number>14</number></property>
+           <property name="bottomMargin"><number>10</number></property>
+           <item>
+            <widget class="QLabel" name="labelTituloPagina">
+             <property name="text"><string>Inicio</string></property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelSubtituloPagina">
+             <property name="wordWrap"><bool>true</bool></property>
+             <property name="text"><string/></property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QStackedWidget" name="stackedWidget"/>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>

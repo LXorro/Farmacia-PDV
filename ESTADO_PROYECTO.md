@@ -80,6 +80,14 @@ Los usuarios de ejemplo del central están en `db/distribuido/real/datos-ejemplo
 | Permisos (temporales) · Bitácora | Ocultas | Conceder/revocar · consulta |
 | **Reporte diario** (+ PDF) | Su sucursal | Una sucursal o todas |
 
+### Diseño de la interfaz
+
+- **Menú lateral agrupado** en secciones (Ventas, Inventario, Administración); las secciones no son seleccionables.
+- **Encabezado por pantalla:** título y una línea de ayuda (el Inicio, que ya trae su saludo, no lo muestra).
+- **Botones con tres pesos:** *principal* en acento (acción esperada, y el botón por defecto de cada diálogo), *secundario* en gris pizarra (por defecto) y *destructivo* en rojo. Son de color sólido porque los iconos son blancos. Cada variante declara su propio `:disabled`: un selector por nombre le gana a `QPushButton:disabled`.
+- **Insignia de sesión** en la barra superior: rol y alcance, «Encargado hasta …» si hay un permiso temporal vigente, y el estado de la réplica con color. Se refresca cada 10 s.
+- Pendientes de diseño: gráfica de ventas de 7 días en el Inicio y modo oscuro (ideas, no implementadas).
+
 ### Permiso temporal «encargado» (nuevo)
 
 Para evitar cambios no autorizados, un empleado **sin permiso solo hace lo esencial de un vendedor**: vender y cobrar, consultar productos y existencias, ver tickets y clientes, registrar abonos y devoluciones. Un admin puede concederle el rol «encargado» por **1, 2 o 3 días** (24/48/72 h exactas; lo exigen la app y un `CHECK` de la base), y mientras esté vigente puede:

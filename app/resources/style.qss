@@ -81,51 +81,145 @@ QFrame#frameVentasHoy, QFrame#framePendientes, QFrame#frameCaducidad {
     padding: 6px;
 }
 
-/* ---------- Botones (color sólido de acento en todos, por defecto) ---------- */
+/* ---------- Botones ----------
+   Tres pesos para que no compitan todos: secundario (gris pizarra, el de por defecto),
+   principal (acento: la acción que se espera del usuario) y destructivo (rojo).
+   Los iconos son blancos, por eso los tres son de color sólido.
+   OJO: un selector por nombre (QPushButton#x) le gana a QPushButton:disabled, así que cada
+   variante declara también su propio :disabled. */
 QPushButton {
-    background: #0e8c73;
-    border: 1px solid #0b7560;
+    background: #5d7681;
+    border: 1px solid #4b626c;
     border-radius: 6px;
     padding: 9px 18px;
     color: #ffffff;
     font-weight: 600;
     qproperty-iconSize: 18px 18px;
 }
-QPushButton:hover {
-    background: #0b7560;
-}
-QPushButton:pressed {
-    background: #095f4d;
-}
+QPushButton:hover { background: #4b626c; }
+QPushButton:pressed { background: #3d515a; }
 QPushButton:disabled {
     color: #ffffff;
+    background: #c5d0d5;
+    border-color: #c5d0d5;
+}
+
+/* Principal: acento (también el botón por defecto de cada diálogo: Guardar, Aceptar…) */
+QPushButton#btnNuevo,
+QPushButton#btnCobrar,
+QPushButton#btnIngresar,
+QPushButton#btnConfigurar,
+QPushButton#btnAgregar,
+QPushButton#btnRegistrarAbono,
+QPushButton#btnPdf,
+QPushButton#btnCompletarReembolso,
+QPushButton#btnRegistrar,
+QPushButton#btnPrecioSucursal,
+QPushButton#btnPuntoVenta,
+QPushButton#btnProductos,
+QPushButton#btnClientes,
+QPushButton#btnTickets,
+QPushButton#btnInventario,
+QPushButton#btnCategorias,
+QPushButton#btnProveedores,
+QPushButton#btnEmpleados,
+QPushButton#btnSucursales,
+QPushButton#btnUsuarios,
+QPushButton:default {
+    background: #0e8c73;
+    border-color: #0b7560;
+}
+QPushButton#btnNuevo:hover,
+QPushButton#btnCobrar:hover,
+QPushButton#btnIngresar:hover,
+QPushButton#btnConfigurar:hover,
+QPushButton#btnAgregar:hover,
+QPushButton#btnRegistrarAbono:hover,
+QPushButton#btnPdf:hover,
+QPushButton#btnCompletarReembolso:hover,
+QPushButton#btnRegistrar:hover,
+QPushButton#btnPrecioSucursal:hover,
+QPushButton#btnPuntoVenta:hover,
+QPushButton#btnProductos:hover,
+QPushButton#btnClientes:hover,
+QPushButton#btnTickets:hover,
+QPushButton#btnInventario:hover,
+QPushButton#btnCategorias:hover,
+QPushButton#btnProveedores:hover,
+QPushButton#btnEmpleados:hover,
+QPushButton#btnSucursales:hover,
+QPushButton#btnUsuarios:hover,
+QPushButton:default:hover { background: #0b7560; }
+QPushButton#btnNuevo:pressed,
+QPushButton#btnCobrar:pressed,
+QPushButton#btnIngresar:pressed,
+QPushButton#btnConfigurar:pressed,
+QPushButton#btnAgregar:pressed,
+QPushButton#btnRegistrarAbono:pressed,
+QPushButton#btnPdf:pressed,
+QPushButton#btnCompletarReembolso:pressed,
+QPushButton#btnRegistrar:pressed,
+QPushButton#btnPrecioSucursal:pressed,
+QPushButton#btnPuntoVenta:pressed,
+QPushButton#btnProductos:pressed,
+QPushButton#btnClientes:pressed,
+QPushButton#btnTickets:pressed,
+QPushButton#btnInventario:pressed,
+QPushButton#btnCategorias:pressed,
+QPushButton#btnProveedores:pressed,
+QPushButton#btnEmpleados:pressed,
+QPushButton#btnSucursales:pressed,
+QPushButton#btnUsuarios:pressed,
+QPushButton:default:pressed { background: #095f4d; }
+QPushButton#btnNuevo:disabled,
+QPushButton#btnCobrar:disabled,
+QPushButton#btnIngresar:disabled,
+QPushButton#btnConfigurar:disabled,
+QPushButton#btnAgregar:disabled,
+QPushButton#btnRegistrarAbono:disabled,
+QPushButton#btnPdf:disabled,
+QPushButton#btnCompletarReembolso:disabled,
+QPushButton#btnRegistrar:disabled,
+QPushButton#btnPrecioSucursal:disabled,
+QPushButton#btnPuntoVenta:disabled,
+QPushButton#btnProductos:disabled,
+QPushButton#btnClientes:disabled,
+QPushButton#btnTickets:disabled,
+QPushButton#btnInventario:disabled,
+QPushButton#btnCategorias:disabled,
+QPushButton#btnProveedores:disabled,
+QPushButton#btnEmpleados:disabled,
+QPushButton#btnSucursales:disabled,
+QPushButton#btnUsuarios:disabled,
+QPushButton:default:disabled {
     background: #a9c9c2;
     border-color: #a9c9c2;
+}
+
+/* Destructivo */
+QPushButton#btnEliminar,
+QPushButton#btnCancelarVenta,
+QPushButton#btnRevocar {
+    background: #c0392b;
+    border-color: #a53224;
+}
+QPushButton#btnEliminar:hover,
+QPushButton#btnCancelarVenta:hover,
+QPushButton#btnRevocar:hover { background: #a53224; }
+QPushButton#btnEliminar:pressed,
+QPushButton#btnCancelarVenta:pressed,
+QPushButton#btnRevocar:pressed { background: #8c2a1f; }
+QPushButton#btnEliminar:disabled,
+QPushButton#btnCancelarVenta:disabled,
+QPushButton#btnRevocar:disabled {
+    background: #e0b4ae;
+    border-color: #e0b4ae;
 }
 
 /* Botones de acción principal: un poco más grandes para destacar un paso más */
 QPushButton#btnCobrar, QPushButton#btnIngresar {
     font-size: 15px;
     padding: 11px 22px;
-}
-
-/* Botones de eliminar/cancelar: tono de advertencia en vez del acento */
-QPushButton#btnEliminar, QPushButton#btnCancelarVenta {
-    background: #c0392b;
-    border-color: #a53224;
-}
-QPushButton#btnEliminar:hover, QPushButton#btnCancelarVenta:hover {
-    background: #a53224;
-}
-QPushButton#btnEliminar:pressed, QPushButton#btnCancelarVenta:pressed {
-    background: #8c2a1f;
-}
-/* Sin esta regla, el selector por nombre (más específico) le gana a QPushButton:disabled y el botón
-   deshabilitado se vería igual de intenso que uno activo. */
-QPushButton#btnEliminar:disabled, QPushButton#btnCancelarVenta:disabled {
-    color: #ffffff;
-    background: #e0b4ae;
-    border-color: #e0b4ae;
 }
 
 /* Cuadrícula de accesos rápidos del Inicio: mismo color, alineado a la izquierda */
@@ -240,4 +334,53 @@ QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
     image: url(:/ui/chevron-down.svg);
     width: 12px;
     height: 12px;
+}
+
+/* ---------- Encabezado de cada pantalla ---------- */
+QWidget#encabezadoPagina {
+    background: #f3f5f6;
+    border-bottom: 1px solid #e1e5e8;
+}
+QLabel#labelTituloPagina {
+    color: #16252b;
+    font-size: 22px;
+    font-weight: 700;
+}
+QLabel#labelSubtituloPagina {
+    color: #6b7780;
+    font-size: 13px;
+}
+
+/* ---------- Secciones del menú lateral (elementos no seleccionables) ---------- */
+QListWidget#listMenu::item:disabled {
+    background: transparent;
+    color: #6f8a92;
+    padding: 14px 12px 4px 15px;
+    border-left: 3px solid transparent;
+}
+
+/* ---------- Insignia de sesión en la barra superior ---------- */
+QLabel#labelInsignia {
+    background: transparent;
+    color: #cfd8dc;
+    font-size: 12px;
+    padding-right: 12px;
+}
+
+/* Barra de desplazamiento del menú lateral: fina y oscura, no la clara del estilo por defecto */
+QListWidget#listMenu QScrollBar:vertical {
+    background: transparent;
+    width: 8px;
+    margin: 0;
+}
+QListWidget#listMenu QScrollBar::handle:vertical {
+    background: #35505a;
+    border-radius: 4px;
+    min-height: 24px;
+}
+QListWidget#listMenu QScrollBar::add-line:vertical, QListWidget#listMenu QScrollBar::sub-line:vertical {
+    height: 0;
+}
+QListWidget#listMenu QScrollBar::add-page:vertical, QListWidget#listMenu QScrollBar::sub-page:vertical {
+    background: transparent;
 }

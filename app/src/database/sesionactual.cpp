@@ -2,6 +2,7 @@
 #include "databasemanager.h"
 
 #include <QSqlQuery>
+#include <QTimeZone>
 
 SesionActual &SesionActual::instance() {
     static SesionActual sesion;
@@ -22,14 +23,22 @@ bool SesionActual::veTodasLasSucursales() const {
     return esAdmin() && !DatabaseManager::esSucursal();
 }
 
-bool SesionActual::tienePermisoTemporal() const {
+QDateTime SesionActual::vencePermisoTemporal() const {
     if (m_idUsuario < 0)
-        return false;
+        return QDateTime();
     QSqlQuery query;
-    query.prepare("SELECT 1 FROM Permisos_Temporales WHERE id_usuario = :u AND estado = 'vigente' "
-                  "AND UTC_TIMESTAMP() BETWEEN fecha_inicio AND fecha_fin LIMIT 1");
+    query.prepare("SELECT MAX(fecha_fin) FROM Permisos_Temporales WHERE id_usuario = :u AND estado = 'vigente' "
+                  "AND UTC_TIMESTAMP() BETWEEN fecha_inicio AND fecha_fin");
     query.bindValue(":u", m_idUsuario);
-    return query.exec() && query.next();
+    if (!query.exec() || !query.next() || query.value(0).isNull())
+        return QDateTime();
+    QDateTime fin = query.value(0).toDateTime();   // guardado en UTC, sin zona
+    fin.setTimeZone(QTimeZone::utc());
+    return fin.toLocalTime();
+}
+
+bool SesionActual::tienePermisoTemporal() const {
+    return vencePermisoTemporal().isValid();
 }
 
 bool SesionActual::puedeGestionarSucursal() const {
