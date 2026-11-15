@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ReporteDiarioPage</class>
+ <widget class="QWidget" name="ReporteDiarioPage">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>900</width><height>600</height></rect>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="filtrosLayout">
+     <item><widget class="QLabel" name="labelFecha"><property name="text"><string>Fecha:</string></property></widget></item>
+     <item><widget class="QDateEdit" name="dateFecha"><property name="calendarPopup"><bool>true</bool></property></widget></item>
+     <item><widget class="QLabel" name="labelSucursal"><property name="text"><string>Sucursal:</string></property></widget></item>
+     <item><widget class="QComboBox" name="comboSucursal"/></item>
+     <item><spacer name="spacer"><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+     <item><widget class="QPushButton" name="btnRefrescar"><property name="text"><string>Actualizar</string></property></widget></item>
+     <item><widget class="QPushButton" name="btnPdf"><property name="text"><string>Exportar a PDF</string></property></widget></item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTextBrowser" name="textoReporte"/>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

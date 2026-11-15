@@ -23,6 +23,8 @@ add_executable(FarmaciaApp
     src/database/estadosync.cpp
     src/database/sesionactual.h
     src/database/sesionactual.cpp
+    src/util/reportediario.h
+    src/util/reportediario.cpp
     src/util/bitacora.h
     src/util/bitacora.cpp
     src/util/modeloutc.h
@@ -64,6 +66,9 @@ add_executable(FarmaciaApp
     src/pages/asignacionespage.h
     src/pages/asignacionespage.cpp
     src/pages/asignacionespage.ui
+    src/pages/reportediariopage.h
+    src/pages/reportediariopage.cpp
+    src/pages/reportediariopage.ui
     src/pages/permisospage.h
     src/pages/permisospage.cpp
     src/pages/permisospage.ui

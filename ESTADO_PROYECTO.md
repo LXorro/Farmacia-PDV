@@ -78,6 +78,7 @@ Los usuarios de ejemplo del central están en `db/distribuido/real/datos-ejemplo
 | Productos, Categorías | Lectura; el empleado fija **su precio** (botón «Precio en mi sucursal») | CRUD del catálogo |
 | Proveedores, Empleados, Sucursales, Usuarios, Asignaciones | Ocultas | CRUD |
 | Permisos (temporales) · Bitácora | Ocultas | Conceder/revocar · consulta |
+| **Reporte diario** (+ PDF) | Su sucursal | Una sucursal o todas |
 
 ### Permiso temporal «encargado» (nuevo)
 
@@ -88,6 +89,13 @@ Para evitar cambios no autorizados, un empleado **sin permiso solo hace lo esenc
 Detalles: el permiso se guarda en `Permisos_Temporales` (la escribe el central y baja a las sucursales), vence solo aunque no haya conexión (las fechas van en **UTC**, independiente de la zona de cada equipo) y se vuelve a comprobar al guardar, por si venció con la ventana abierta. Un admin puede revocarlo antes. Cada cambio queda en `Bitacora_Cambios` (usuario, fecha, antes → después y si fue con permiso temporal), que sube al central y el admin consulta en la pantalla **Bitácora**. Las devoluciones **no** requieren permiso (decisión del proyecto).
 
 **Limitación:** la restricción vive en la aplicación, no en la base de datos. MariaDB solo conoce una cuenta por equipo (`farmacia_app`), así que no puede distinguir qué empleado escribe; alguien con acceso directo a la base del equipo podría saltársela. Igual que los roles admin/empleado.
+
+### Reporte diario de movimientos (con PDF)
+
+Pantalla **Reporte diario**: se elige la fecha (hasta hoy) y, si es un admin sobre el central, una sucursal o todas; un empleado ve solo la suya. Incluye: resumen (tickets, ventas, ticket promedio, cobrado, reembolsado, neto, pendiente de cobro), ventas por sucursal (con «todas»), cobros por método de pago, **corte de efectivo** (cobrado − devuelto, sin fondo inicial), devoluciones del día (con las de tarjeta pendientes de cualquier fecha), productos más vendidos, movimientos de inventario, cambios de precios y lotes (bitácora) y alertas al cierre (lotes caducados o por caducar, productos bajo mínimo, saldos pendientes). **Exportar a PDF** imprime el mismo contenido sobre A4 (sin dependencias extra: `QPdfWriter`).
+- Cada sucursal registra con la hora de su equipo (`DATE(fecha)` sobre lo guardado); la bitácora va en UTC y se convierte a hora local.
+- Con la vista de todas las sucursales, los datos de una sucursal sin conexión con el central pueden estar incompletos.
+- Código en `app/src/util/reportediario.cpp` (genera el HTML) y `app/src/pages/reportediariopage.*`.
 
 ### Pagos y reembolsos con tarjeta
 
@@ -134,7 +142,7 @@ Plan_Proyecto.md         Alcance y diseño · Farmacia_actualizado.md: esquema b
 ## 10. Pendiente y riesgos conocidos
 
 **Sin probar de punta a punta**
-- La interfaz de precios por sucursal (botón, Punto de Venta con precio propio, «bajo mínimo»).
+- La pantalla Reporte diario en la interfaz (el HTML y el PDF se probaron fuera de la app con datos reales de ejemplo y un día vacío; las cifras coinciden), y la interfaz de precios por sucursal (botón, Punto de Venta con precio propio, «bajo mínimo»).
 - La replicación de subida con ventas reales (una venta de empleado que llega al central) y la barra de estado en una sesión de empleado.
 - `demo.sh` (se ajustaron los nombres de columna, pero no se volvió a ejecutar) y `docs/Reporte.md` / `diagrama_arquitectura.md`, que describen la demo anterior (puertos 13306/13307) y no el modelo por sesión.
 
@@ -151,8 +159,7 @@ Plan_Proyecto.md         Alcance y diseño · Farmacia_actualizado.md: esquema b
 - Un admin teclea dos contraseñas (usuario + `farmacia_remoto`). Propuesto, sin implementar: casilla «Recordar en este equipo».
 - Un `DROP`/`TRUNCATE` o cualquier DDL hecho con registro binario en un nodo también se replica: los cambios de esquema deben hacerse con `sql_log_bin=0` en cada nodo.
 
-**Pendiente decidido (anotado por el usuario)**
-- **Reporte diario de movimientos** hechos en cada sucursal (ventas, cambios, devoluciones…): por implementar.
+**Pendiente decidido**
 - Pagos y reembolsos con tarjeta: implementado (ver sección 6). Falta probarlo en la interfaz. Las devoluciones en efectivo de pagos con tarjeta **hechas antes** de este cambio no se anulan ni se marcan: quedan como estaban.
 
 **Ideas abiertas**

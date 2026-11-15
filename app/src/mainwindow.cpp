@@ -16,6 +16,7 @@
 #include "pages/iniciopage.h"
 #include "pages/lotespage.h"
 #include "pages/productospage.h"
+#include "pages/reportediariopage.h"
 #include "pages/proveedorespage.h"
 #include "pages/puntoventapage.h"
 #include "pages/sucursalespage.h"
@@ -81,6 +82,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     ui->listMenu->addItem(new QListWidgetItem(Iconos::inventario(), "Inventario"));
     ui->stackedWidget->addWidget(central ? soloLectura(new LotesPage(this)) : new LotesPage(this));
+
+    // Reporte diario de movimientos (con exportación a PDF): cada quien ve el alcance de su sesión.
+    ui->listMenu->addItem(new QListWidgetItem(Iconos::tickets(), "Reporte diario"));
+    ui->stackedWidget->addWidget(new ReporteDiarioPage(this));
 
     ui->listMenu->addItem(new QListWidgetItem(Iconos::categorias(), "Categorías"));
     ui->stackedWidget->addWidget(new CategoriasPage(this));
