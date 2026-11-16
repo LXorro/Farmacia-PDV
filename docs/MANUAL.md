@@ -192,6 +192,61 @@ MariaDB no activa el registro binario ni el `server-id` en caliente: hay que esc
    ```
 7. Si ya existía una instalación con **otra base de datos** en este mismo MariaDB (de otro proyecto), no pasa nada: `binlog-do-db=farmacia` impide que sus cambios suban al central.
 
+### 4.4b Guía de replicación de MariaDB (qué se configura y por qué)
+
+**Aviso importante:** el mensaje «Falta preparar MariaDB» del asistente está escrito para **Linux** (habla de `/etc/my.cnf.d/farmacia-nodo.cnf` y de `sudo systemctl restart mariadb`). En **Windows** no apliques esos pasos: el equivalente es editar `my.ini` (4.4) y reiniciar el servicio con `net stop` / `net start`. El **contenido** de las opciones es idéntico en ambos sistemas.
+
+#### Qué hace cada opción
+
+| Opción | Para qué sirve | Si falta o está mal |
+|---|---|---|
+| `server-id=10+ranura` | Identidad única del nodo en la replicación (el central usa 1) | Dos nodos con el mismo id se pisan; el asistente no continúa |
+| `gtid_domain_id=10+ranura` | Cada nodo es su propio «dominio» de transacciones (GTID) | Posiciones de réplica ambiguas |
+| `log-bin=farmacia-bin` | Activa el registro binario; sin él el central no puede leer las ventas | «El MariaDB local no tiene registro binario (log-bin) activo» |
+| `binlog_format=ROW` | Registra filas, no sentencias: evita que los triggers (stock, subtotales) se ejecuten dos veces | El asistente lo rechaza si no es `ROW` |
+| `binlog-do-db=farmacia` | Solo la base `farmacia` entra al registro; otras bases del equipo no llegan al central | Un cambio en otra base detendría la réplica del central |
+| `auto_increment_increment=10` y `auto_increment_offset=ranura` | Cada nodo genera ids distintos (central: 1, 11, 21…; ranura 2: 2, 12, 22…) | Choques de ids al subir ventas |
+| `bind-address=0.0.0.0` | MariaDB acepta conexiones por la red (la de Tailscale) y no solo locales | El central no puede conectarse a este equipo |
+| `replicate-do-table=farmacia.<tabla>` (8 líneas) | Este equipo solo aplica del central las tablas del catálogo/personal | Podría intentar aplicar tablas que no le corresponden |
+
+Se calcula así: **ranura** = tabla 2.2 (2 a 10) según el id de la sucursal; `server-id` = 10 + ranura.
+
+#### Windows (resumen)
+
+1. Editar `my.ini` (4.4), guardar sin BOM.
+2. `net stop MariaDB` y `net start MariaDB` (cmd como administrador).
+3. Abrir el puerto en el firewall (4.5).
+4. Verificar con `SELECT @@log_bin,@@server_id,@@auto_increment_offset,@@auto_increment_increment,@@binlog_format;`.
+
+#### Linux
+
+Con el script del repositorio (hace los pasos 1 y 2; la ranura la indica el asistente):
+```
+sudo db/distribuido/real/preparar-nodo.sh <ranura>
+```
+o a mano: guardar las mismas líneas en `/etc/my.cnf.d/farmacia-nodo.cnf` (Arch/Fedora) o `/etc/mysql/mariadb.conf.d/60-farmacia-nodo.cnf` (Debian/Ubuntu), y `sudo systemctl restart mariadb`. Después abrir el puerto si hay firewall (`ufw`/`firewalld`) y verificar con la misma consulta.
+
+#### Qué automatiza el asistente (no lo repitas a mano)
+
+Cuando pulsas **Configurar**, con el registro binario apagado en el nodo (nada de esto viaja por la red), el asistente:
+1. Crea la base `farmacia` y su esquema y la cuenta local `farmacia_app` (contraseña aleatoria).
+2. En el **central** crea `repl_s<id>` (para que este nodo lea el binlog del central) y en el **nodo** crea `repl_central` (para que el central lea el de este nodo). Ambas con permiso solo de replicación y solo desde la red de Tailscale.
+3. Copia las 8 tablas del central con la **posición exacta del binlog** (así la réplica continúa justo desde ahí).
+4. Arranca la réplica de **bajada** en el nodo (`CHANGE MASTER … START SLAVE`).
+5. Crea o actualiza en el central la réplica de **subida** `sucursal_<id>` y la arranca. La primera vez empieza desde la posición **actual** del binlog del nodo, de modo que nada anterior al enlace sube al central.
+
+Por eso, **después** del asistente no hay que escribir `CHANGE MASTER` ni crear cuentas a mano. Hacerlo por tu cuenta es la forma más fácil de dejar una réplica inconsistente.
+
+#### Comprobación (solo lectura)
+
+En el nodo: `SHOW ALL REPLICAS STATUS\G`. En el central: `SHOW ALL SLAVES STATUS\G`. En ambos, `Slave_IO_Running: Yes`, `Slave_SQL_Running: Yes`, errores vacíos y `Seconds_Behind_Master: 0`.
+
+#### Si algo se rompe
+
+- Tras corregir la causa (red, firewall, migración pendiente): `STOP SLAVE; START SLAVE;` (en el central: `STOP SLAVE 'sucursal_<id>'; START SLAVE 'sucursal_<id>';`).
+- No uses `RESET SLAVE`, `RESET MASTER`, `DROP DATABASE` ni `CHANGE MASTER` sin leer la sección 5 y el Anexo A.
+- Tabla de síntomas y causas: secciones 6.2 y 6.3.
+
 ### 4.5 Firewall de Windows
 
 El central debe poder conectarse **a tu** MariaDB por la red de Tailscale. En PowerShell como administrador (cambia el puerto si no es 3306):
@@ -219,7 +274,7 @@ Abre `FarmaciaApp.exe`. Si la app no encuentra una base válida, aparece «Confi
 
 Pulsa **Configurar**. El texto de estado avanza: «Comprobando la configuración de MariaDB…» → «Preparando la base de datos local…» → «Configurando la replicación con el central…». Qué hace por dentro (todo con el registro binario apagado en el nodo, para que nada de esto viaje por la red): crea la base `farmacia` y su esquema, crea la cuenta local `farmacia_app` con contraseña aleatoria, copia el catálogo del central con la posición exacta del binlog, crea las cuentas de replicación y arranca las dos réplicas.
 
-- Si aparece **«Falta preparar MariaDB»**, es el paso 4.4 (incompleto). Corrígelo y vuelve a pulsar *Configurar*.
+- Si aparece **«Falta preparar MariaDB»**, es el paso 4.4 (incompleto); el texto del mensaje es de Linux, en Windows sigue 4.4 y la guía 4.4b. Corrígelo y vuelve a pulsar *Configurar*.
 - Si aparece **«Este equipo no tiene dirección de Tailscale»**, abre Tailscale y conéctate.
 - Al terminar, la app pasa sola al inicio de sesión.
 
