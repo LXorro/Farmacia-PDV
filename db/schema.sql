@@ -147,6 +147,8 @@ CREATE TABLE Inventario (
 -- ---------------------------------------------------------------------
 -- Ventas (fragmentadas horizontalmente por sucursal vía Tickets.id_sucursal)
 -- ---------------------------------------------------------------------
+-- total y saldo_pendiente son VIRTUAL (se calculan al leer), no STORED: un central MariaDB 10.11 no
+-- recalcula las STORED al aplicar por réplica las actualizaciones del trigger y las dejaba en 0.00 (migración 005).
 CREATE TABLE Tickets (
     id_ticket         INT AUTO_INCREMENT PRIMARY KEY,
     id_sucursal       INT NOT NULL,
@@ -155,10 +157,10 @@ CREATE TABLE Tickets (
     fecha_venta       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     subtotal          DECIMAL(10,2) NOT NULL DEFAULT 0,
     descuento         DECIMAL(10,2) NOT NULL DEFAULT 0,
-    total             DECIMAL(10,2) GENERATED ALWAYS AS (subtotal - descuento) STORED,
+    total             DECIMAL(10,2) GENERATED ALWAYS AS (subtotal - descuento) VIRTUAL,
     modalidad_pago    ENUM('contado', 'diferido') NOT NULL DEFAULT 'contado',
     monto_pagado      DECIMAL(10,2) NOT NULL DEFAULT 0,
-    saldo_pendiente   DECIMAL(10,2) GENERATED ALWAYS AS (subtotal - descuento - monto_pagado) STORED,
+    saldo_pendiente   DECIMAL(10,2) GENERATED ALWAYS AS (subtotal - descuento - monto_pagado) VIRTUAL,
     fecha_limite_pago DATE,
     estado_pago       ENUM('pagado', 'parcial', 'pendiente', 'vencido') NOT NULL DEFAULT 'pendiente',
     estado_ticket     ENUM('completado', 'cancelado', 'devuelto') NOT NULL DEFAULT 'completado',

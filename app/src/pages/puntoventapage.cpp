@@ -1,5 +1,7 @@
 #include "puntoventapage.h"
+#include "../dialogs/pagomixtodialog.h"
 #include "../dialogs/pagotarjetadialog.h"
+#include "../dialogs/vistaticketdialog.h"
 #include "ui_puntoventapage.h"
 #include "../database/sesionactual.h"
 #include "../util/iconos.h"
@@ -232,18 +234,35 @@ void PuntoVentaPage::cobrar() {
         return;
     }
 
-    // Cobro con tarjeta: la terminal cobra; aquí se registra la autorización de su comprobante (antes de
-    // tocar la base: si se cancela, no se vende nada).
-    QString autorizacion, ultimosDigitos;
-    if (modalidad == "contado" && metodo == "tarjeta") {
-        double totalCarrito = 0;
-        for (const LineaCarrito &linea : m_carrito)
-            totalCarrito += linea.cantidad * linea.precioUnitario;
-        PagoTarjetaDialog dialogoTarjeta(totalCarrito, this);
-        if (dialogoTarjeta.exec() != QDialog::Accepted)
-            return;
-        autorizacion = dialogoTarjeta.autorizacion();
-        ultimosDigitos = dialogoTarjeta.ultimosDigitos();
+    if (metodo == "mixto" && modalidad != "contado") {
+        QMessageBox::warning(this, "Pago mixto", "El pago mixto aplica solo a ventas de contado.");
+        return;
+    }
+
+    // Los pagos de una venta de contado se arman antes de tocar la base (si se cancela, no se vende nada).
+    // Con tarjeta la terminal cobra; aquí se registra la autorización de su comprobante. El monto de los
+    // pagos de un solo método se completa con el total que calcula la base.
+    double totalCarrito = 0;
+    for (const LineaCarrito &linea : m_carrito)
+        totalCarrito += linea.cantidad * linea.precioUnitario;
+    QVector<PagoParte> pagos;
+    double efectivoRecibido = -1, cambio = 0;
+    if (modalidad == "contado") {
+        if (metodo == "mixto") {
+            PagoMixtoDialog dialogoMixto(totalCarrito, this);
+            if (dialogoMixto.exec() != QDialog::Accepted)
+                return;
+            pagos = dialogoMixto.partes();
+            efectivoRecibido = dialogoMixto.efectivoRecibido();
+            cambio = dialogoMixto.cambio();
+        } else if (metodo == "tarjeta") {
+            PagoTarjetaDialog dialogoTarjeta(totalCarrito, this);
+            if (dialogoTarjeta.exec() != QDialog::Accepted)
+                return;
+            pagos.append({"tarjeta", 0.0, dialogoTarjeta.autorizacion(), dialogoTarjeta.ultimosDigitos()});
+        } else {
+            pagos.append({metodo, 0.0, QString(), QString()});
+        }
     }
 
     QSqlDatabase db = QSqlDatabase::database();
@@ -305,18 +324,36 @@ void PuntoVentaPage::cobrar() {
         totalQuery.next();
         double total = totalQuery.value(0).toDouble();
 
-        QSqlQuery insertarPago;
-        insertarPago.prepare("INSERT INTO Pagos (id_ticket, monto, metodo_pago, numero_referencia, ultimos_digitos) "
-                             "VALUES (:ticket, :monto, :metodo, :referencia, :ultimos)");
-        insertarPago.bindValue(":ticket", idTicket);
-        insertarPago.bindValue(":monto", total);
-        insertarPago.bindValue(":metodo", metodo);
-        insertarPago.bindValue(":referencia", autorizacion.isEmpty() ? QVariant(QMetaType(QMetaType::QString)) : QVariant(autorizacion));
-        insertarPago.bindValue(":ultimos", ultimosDigitos.isEmpty() ? QVariant(QMetaType(QMetaType::QString)) : QVariant(ultimosDigitos));
-        if (!insertarPago.exec()) {
-            db.rollback();
-            QMessageBox::critical(this, "Error", "No se pudo registrar el pago:\n" + insertarPago.lastError().text());
-            return;
+        if (metodo == "mixto") {
+            // Las partes deben sumar exactamente lo que la base calculó (en centavos, sin errores de redondeo).
+            qint64 suma = 0;
+            for (const PagoParte &parte : pagos)
+                suma += qRound64(parte.monto * 100.0);
+            if (suma != qRound64(total * 100.0)) {
+                db.rollback();
+                QMessageBox::critical(this, "Pago mixto",
+                                       QString("Los pagos suman $%1 y el ticket es de $%2. No se registró la venta.")
+                                           .arg(suma / 100.0, 0, 'f', 2).arg(total, 0, 'f', 2));
+                return;
+            }
+        } else if (!pagos.isEmpty()) {
+            pagos[0].monto = total;
+        }
+
+        for (const PagoParte &parte : pagos) {
+            QSqlQuery insertarPago;
+            insertarPago.prepare("INSERT INTO Pagos (id_ticket, monto, metodo_pago, numero_referencia, ultimos_digitos) "
+                                 "VALUES (:ticket, :monto, :metodo, :referencia, :ultimos)");
+            insertarPago.bindValue(":ticket", idTicket);
+            insertarPago.bindValue(":monto", parte.monto);
+            insertarPago.bindValue(":metodo", parte.metodo);
+            insertarPago.bindValue(":referencia", parte.referencia.isEmpty() ? QVariant(QMetaType(QMetaType::QString)) : QVariant(parte.referencia));
+            insertarPago.bindValue(":ultimos", parte.ultimos.isEmpty() ? QVariant(QMetaType(QMetaType::QString)) : QVariant(parte.ultimos));
+            if (!insertarPago.exec()) {
+                db.rollback();
+                QMessageBox::critical(this, "Error", "No se pudo registrar el pago:\n" + insertarPago.lastError().text());
+                return;
+            }
         }
     }
 
@@ -326,6 +363,17 @@ void PuntoVentaPage::cobrar() {
         return;
     }
 
-    QMessageBox::information(this, "Venta registrada", QString("Ticket #%1 registrado correctamente.").arg(idTicket));
     limpiarCarrito();
+
+    // La venta ya está guardada: ofrecer el ticket (no depende de que haya impresora).
+    QMessageBox aviso(QMessageBox::Information, "Venta registrada",
+                      QString("Ticket #%1 registrado correctamente.").arg(idTicket), QMessageBox::NoButton, this);
+    auto *verTicket = aviso.addButton("Ver / imprimir ticket", QMessageBox::AcceptRole);
+    aviso.addButton("Cerrar", QMessageBox::RejectRole);
+    aviso.setDefaultButton(verTicket);
+    aviso.exec();
+    if (aviso.clickedButton() == verTicket) {
+        VistaTicketDialog vista(idTicket, efectivoRecibido, cambio, this);
+        vista.exec();
+    }
 }

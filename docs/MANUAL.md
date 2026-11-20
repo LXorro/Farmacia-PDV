@@ -293,6 +293,13 @@ Pulsa **Configurar**. El texto de estado avanza: «Comprobando la configuración
    Debe existir una conexión `sucursal_<id>` con ambos hilos en `Yes`.
 4. Haz la **prueba de humo** (sección 11). El instalado se considera bueno solo si pasa completa.
 
+### 4.8 Ticket e impresora (opcional)
+
+1. Instala la impresora térmica en Windows con el driver del fabricante y fija en sus preferencias el papel de **80 mm** (rollo). Imprime la página de prueba de Windows.
+2. En la app, abre cualquier ticket → **Ver / imprimir ticket** → **Configurar…**: elige la impresora, deja 80 mm y **42 columnas**, y captura razón social, RFC y domicilio.
+3. Para calibrar, imprime un ticket con una línea larga: si se corta por la derecha, baja las columnas a 40; si sobra mucho margen, súbelas (hasta 48).
+4. Sin impresora, todo funciona con **Guardar PDF…**. La configuración vive en el registro de Windows (`HKCU\Software\Farmacia\FarmaciaApp`, clave `ticket`): el reinicio de nivel 1 (sección 5) también la borra.
+
 ## 4b. Variante: equipo único (sin central)
 
 Para demostraciones o pruebas locales sin red:
@@ -451,13 +458,16 @@ Un equipo **nuevo** ya trae el esquema actual dentro de la app: **no necesita mi
 | 002 | Precios por sucursal (`Productos_Sucursal`, `precio_sugerido`) | `db/migraciones/002_precios_por_sucursal.sql` |
 | 003 | Permisos temporales y bitácora | `003_permisos_y_bitacora.sql` |
 | 004 | Pagos y reembolsos con tarjeta | `004_reembolsos_tarjeta.sql` |
+| 005 | **Totales calculados:** `Tickets.total` y `saldo_pendiente` pasan a `VIRTUAL` (corrige que el central mostraba 0.00) | `005_totales_calculados.sql` |
 
 Orden **obligatorio** al desplegar un cambio:
 1. Aplicar la migración en **todos** los nodos y en el central (en Windows: abrir el cliente, `USE farmacia;` y `SOURCE ruta\migracion.sql;`, con `SET SESSION sql_log_bin=0;` antes, en nodos; en el central, el responsable por SSH: `sudo mariadb < archivo.sql`).
 2. Reejecutar `preparar-central.sh` en el central.
 3. Solo entonces usar la versión nueva de la app.
 
-> Estado verificado más recientemente: la **004** sigue **pendiente** en el central y en los nodos. Hasta aplicarla, el cobro con tarjeta y las devoluciones de la versión nueva fallan. Confírmalo con `DESCRIBE farmacia.Pagos;` (debe existir `ultimos_digitos`).
+> Estado al 2026-11-20: la **004** está aplicada en el central y en el portátil Linux (falta en el equipo Windows). La **005** está preparada y **pendiente** en todos los nodos. Aplícala **primero en el central** (corrige al instante lo ya subido) y luego en cada equipo. Confirma la 004 con `DESCRIBE farmacia.Pagos;` (debe existir `ultimos_digitos`) y la 005 con `SELECT column_name, extra FROM information_schema.columns WHERE table_name='Tickets' AND column_name IN ('total','saldo_pendiente');` (debe decir `VIRTUAL GENERATED`).
+>
+> **Defecto que corrige la 005:** sin ella, un administrador conectado al central ve `total` y `saldo_pendiente` en 0.00 en tickets, Inicio y Reporte diario. En la sucursal se ve bien. Mientras no esté aplicada, las pruebas P-05, N-08 y N-17 fallan en el central.
 
 ## 8. Operaciones frecuentes del responsable
 
@@ -488,10 +498,20 @@ Agrupado en **Ventas** (Inicio, Punto de Venta, Clientes, Tickets, Reporte diari
 2. Elige el **cliente** (o «Venta de mostrador (sin registrar)») y el **empleado** que atiende.
 3. **Cobrar:** elige el método:
    - **Efectivo** o **transferencia:** captura el monto.
+   - **Mixto** (solo ventas de contado): combina tarjeta, transferencia y efectivo. Captura cuánto va con tarjeta (con su autorización) y con transferencia; el **efectivo es lo que falta**. Escribe el efectivo recibido y la ventana calcula el **cambio**. Debe haber al menos dos métodos y la suma tiene que ser exactamente el total.
    - **Tarjeta:** la app **no cobra**; cobras en la terminal y registras aquí la **autorización** del comprobante (4 a 20 letras/números, normalmente 6) y, si quieres, los **últimos 4 dígitos**.
    - **Diferido (a crédito):** exige un cliente registrado y una fecha límite; después se registran **abonos**.
-4. Al terminar aparece «Venta registrada: Ticket #…».
+4. Al terminar aparece «Venta registrada: Ticket #…» con el botón **«Ver / imprimir ticket»**.
 5. El precio es el de **tu sucursal**; si no se fijó uno, se cobra el precio sugerido del catálogo. Cambiar un precio no altera tickets viejos.
+
+### 9.3b El ticket impreso
+- **Verlo:** desde «Ver / imprimir ticket» al cobrar o desde el detalle de cualquier ticket (botón del mismo nombre). Se muestra tal como saldría en el papel de 80 mm.
+- **Guardar PDF…:** genera un PDF del ancho del rollo. Sirve como comprobante o para probar sin impresora.
+- **Imprimir…:** usa la impresora configurada o te deja elegir una. Sin impresoras instaladas, ofrece el PDF.
+- **Configurar…:** impresora, ancho del papel (80 mm; 58 mm = 32 columnas), columnas por línea (42 por defecto), nombre comercial, razón social, RFC, domicilio, teléfono y el texto del pie. **Se guarda por equipo.** Si faltan la razón social o el RFC, la vista lo avisa.
+- Contenido: establecimiento, folio, fecha, quién atendió, cliente, productos con cantidad, precio e importe, **IVA desglosado** (los precios ya lo incluyen), forma de pago (con autorización y últimos 4 de la tarjeta), efectivo recibido y cambio, saldo y fecha límite si fue a crédito, y las devoluciones del ticket.
+- El efectivo recibido y el cambio **solo salen al cobrar**; una reimpresión no los muestra.
+- El ticket **no es una factura**. El desglose de IVA usa la categoría del producto (medicamento a 0 %, el resto a 16 %): confírmalo con tu contador.
 
 ### 9.4 Tickets y devoluciones
 - **Tickets:** lista, filtros y *Detalle* del ticket (productos, pagos, devoluciones).
@@ -685,6 +705,44 @@ Productos del catálogo de ejemplo (códigos de `db/seed.sql` en equipo único; 
 | V-49 | Dos ventas del mismo producto casi simultáneas en dos equipos de **distintas** sucursales | Cada una descuenta su stock; sin interferencia |
 | V-50 | Vender con la red de Tailscale **desconectada** | Funciona (la base local no necesita red); sube al reconectar |
 
+## 15b. Pago mixto y ticket impreso
+
+| ID | Prueba | Esperado |
+|---|---|---|
+| PM-01 | Cobrar $98 con tarjeta $50 + transferencia $20 (resto efectivo, recibido $40) | Efectivo a cobrar $28, cambio $12; venta registrada |
+| PM-02 | En la base, `Pagos` del ticket | 3 filas: efectivo $28 (sin el cambio), tarjeta $50 con autorización, transferencia $20; suman $98 |
+| PM-03 | Mixto con un solo método (todo con tarjeta o todo en efectivo) | «Un pago mixto combina al menos dos métodos»; no se cobra |
+| PM-04 | Tarjeta + transferencia mayores al total | «suman más que el total» |
+| PM-05 | Tarjeta sin autorización, o de 3 o 21 caracteres | Rechazada |
+| PM-06 | Últimos dígitos con 3 números o letras | Rechazados (vacío está permitido) |
+| PM-07 | Efectivo recibido menor al efectivo a cobrar | «no alcanza: faltan $…» |
+| PM-08 | Tarjeta + transferencia sin efectivo | Se acepta; no pide efectivo recibido |
+| PM-09 | Elegir «mixto» con modalidad «diferido» | «El pago mixto aplica solo a ventas de contado»; no se vende |
+| PM-10 | Cancelar la ventana de pago mixto | No se vende nada ni baja el stock |
+| PM-11 | Efectivo y tarjeta simples tras el cambio | Siguen funcionando igual que antes |
+| PM-12 | Devolver en efectivo más de lo no pagado con tarjeta en un ticket mixto | Rechazado («Pagó con tarjeta… solo se puede devolver $…») |
+| PM-13 | Devolver a tarjeta más de lo pagado con tarjeta | Rechazado («Solo quedan $… por reembolsar a la tarjeta») |
+| PM-14 | Devolución a tarjeta de un ticket mixto | Queda «pendiente en terminal» hasta capturar el folio |
+| PM-15 | Reporte diario con ventas mixtas | «Cobros por método» reparte el efectivo, la tarjeta y la transferencia; el corte de efectivo cuenta solo el efectivo |
+| TK-01 | «Ver / imprimir ticket» tras cobrar | Se ve el ticket con folio, fecha, productos, IVA, total y pago |
+| TK-02 | Las columnas de cantidad, precio e importe | Alineadas; el importe a la derecha; letra de ancho fijo |
+| TK-03 | Producto con nombre muy largo | Se parte por palabras en varias líneas; ninguna línea se sale del ancho |
+| TK-04 | Ticket con 1 producto y con 40 productos | Ambos completos; sin cortes raros |
+| TK-05 | Ticket de venta a crédito con abono | Muestra los abonos, «SALDO PENDIENTE» y fecha límite |
+| TK-06 | Ticket pagado con tarjeta | «Tarjeta ****NNNN» y la autorización |
+| TK-07 | Ticket con devoluciones | Sección «DEVOLUCIONES REGISTRADAS»; la de tarjeta sin folio dice «pendiente en terminal» |
+| TK-08 | Reimprimir desde el detalle de un ticket | Igual, sin «Efectivo recibido» ni «Cambio» |
+| TK-09 | Admin conectado al central abre el ticket de una sucursal | Se ve completo, con los datos de esa sucursal |
+| TK-10 | Configurar: RFC inválido (`XX123`) | «El RFC debe tener 12 caracteres…»; no guarda |
+| TK-11 | Configurar razón social y RFC | Salen en el encabezado y desaparece el aviso «Faltan datos fiscales» |
+| TK-12 | Cambiar columnas a 48 y a 32 | El ticket se vuelve a armar sin líneas partidas |
+| TK-13 | Guardar PDF y abrirlo | Papel de 80 mm de ancho; letra legible; acentos y `ñ` correctos |
+| TK-14 | Imprimir sin impresoras instaladas | Aviso claro y la opción del PDF; la venta no se pierde |
+| TK-15 | Imprimir en la térmica real de 80 mm | El texto cabe en el ancho, sin saltos de línea inesperados (**calibrar columnas si no**) |
+| TK-16 | Impresora apagada o sin papel | Mensaje claro; el ticket sigue disponible para reimprimir |
+| TK-17 | Reinicio de nivel 1 del equipo | La configuración del ticket se borra con el resto (volver a configurarla) |
+| TK-18 | Desglose de IVA: producto de categoría «medicamento» y otro de higiene en el mismo ticket | IVA 0 % sobre el medicamento e IVA 16 % sobre el otro; subtotal + IVA = total |
+
 ## 16. Catálogo, inventario, clientes, administración
 
 | ID | Prueba | Esperado |
@@ -740,6 +798,7 @@ Productos del catálogo de ejemplo (códigos de `db/seed.sql` en equipo único; 
 | N-14 | Reloj del equipo mal (fecha +1 día) | Documenta el efecto en reportes y permisos |
 | N-15 | Disco casi lleno / crecimiento del binlog | Anota el tamaño del binlog tras 1 día de uso |
 | N-16 | Desconectar el cable/Wi-Fi durante «Cobrar» | La venta se guarda **completa o nada** (transacción) |
+| N-17 | Con la migración 005: vender a crédito con abono parcial y mirarlo con un admin **conectado al central** (Tickets, detalle, Inicio y Reporte diario) | `total` y `saldo_pendiente` correctos (no 0.00) e iguales a los de la sucursal |
 
 ## 18. Reporte diario, PDF y pantalla
 
@@ -790,11 +849,11 @@ Gravedad:  Bloqueante · Alta · Media · Baja
 ## 21. Criterios de aceptación para dar por buena la entrega
 
 - [ ] Prueba de humo (H-01…H-10) completa en **cada** equipo instalado.
-- [ ] Todas las filas I-, L-, V- y C- marcadas; los defectos *Bloqueante/Alta* corregidos o documentados.
+- [ ] Todas las filas I-, L-, V-, C-, PM- y TK- marcadas; los defectos *Bloqueante/Alta* corregidos o documentados.
 - [ ] N-01…N-04 y N-16 superadas (la réplica no pierde ni duplica datos).
 - [ ] R-01…R-07 superadas **sin** tocar el central.
 - [ ] Ninguna contraseña de `root`, registro o remota en el equipo (S-01/S-02).
-- [ ] Migraciones 002, 003 y 004 aplicadas en el central y en todos los nodos (`DESCRIBE Pagos;` con `ultimos_digitos`).
+- [ ] Migraciones 002, 003, 004 y **005** aplicadas en el central y en todos los nodos (`DESCRIBE Pagos;` con `ultimos_digitos`; `Tickets.total` en `VIRTUAL`).
 - [ ] El central responde a `SHOW ALL SLAVES STATUS` con todas las sucursales en `Yes/Yes` y retraso 0.
 - [ ] Hay un respaldo reciente del central (sección 8).
 - [ ] La contraseña de `farmacia_registro` está anotada en un lugar seguro, y la de este documento (`CREDENCIALES.local.md`) no se subió al repositorio.

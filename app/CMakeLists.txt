@@ -7,7 +7,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Svg Network)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Sql Svg Network PrintSupport)
 
 add_executable(FarmaciaApp
     src/main.cpp
@@ -25,6 +25,8 @@ add_executable(FarmaciaApp
     src/database/sesionactual.cpp
     src/util/reportediario.h
     src/util/reportediario.cpp
+    src/util/ticketimpreso.h
+    src/util/ticketimpreso.cpp
     src/util/bitacora.h
     src/util/bitacora.cpp
     src/util/modeloutc.h
@@ -103,6 +105,12 @@ add_executable(FarmaciaApp
     src/dialogs/lotedialog.ui
     src/dialogs/pagotarjetadialog.h
     src/dialogs/pagotarjetadialog.cpp
+    src/dialogs/pagomixtodialog.h
+    src/dialogs/pagomixtodialog.cpp
+    src/dialogs/vistaticketdialog.h
+    src/dialogs/vistaticketdialog.cpp
+    src/dialogs/configurarticketdialog.h
+    src/dialogs/configurarticketdialog.cpp
     src/dialogs/devoluciondialog.h
     src/dialogs/devoluciondialog.cpp
     src/dialogs/devoluciondialog.ui
@@ -128,4 +136,4 @@ add_executable(FarmaciaApp
 )
 
 target_include_directories(FarmaciaApp PRIVATE src)
-target_link_libraries(FarmaciaApp PRIVATE Qt6::Widgets Qt6::Sql Qt6::Svg Qt6::Network)
+target_link_libraries(FarmaciaApp PRIVATE Qt6::Widgets Qt6::Sql Qt6::Svg Qt6::Network Qt6::PrintSupport)

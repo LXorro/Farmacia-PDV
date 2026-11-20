@@ -166,6 +166,11 @@
          <string>transferencia</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>mixto</string>
+        </property>
+       </item>
       </widget>
      </item>
     </layout>

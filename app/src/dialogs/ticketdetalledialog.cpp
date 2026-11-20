@@ -3,6 +3,7 @@
 #include "../database/databasemanager.h"
 #include "devoluciondialog.h"
 #include "pagotarjetadialog.h"
+#include "vistaticketdialog.h"
 #include "../util/iconos.h"
 #include "../util/tablas.h"
 
@@ -11,6 +12,7 @@
 #include <QHeaderView>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QSqlError>
 #include <QSqlQuery>
 
@@ -59,6 +61,16 @@ TicketDetalleDialog::TicketDetalleDialog(QWidget *parent) : QDialog(parent), ui(
         ui->btnRegistrarDevolucion->setEnabled(false);
         ui->btnCompletarReembolso->setEnabled(false);
     }
+
+    // «Ver ticket»: el ticket tal como saldría impreso (también sirve sin impresora, en PDF).
+    auto *btnVerTicket = new QPushButton("Ver / imprimir ticket", this);
+    btnVerTicket->setObjectName("btnVerTicket");
+    btnVerTicket->setIcon(Iconos::tickets());
+    ui->accionesLayout->insertWidget(0, btnVerTicket);
+    connect(btnVerTicket, &QPushButton::clicked, this, [this] {
+        VistaTicketDialog vista(m_idTicket, -1, 0, this);
+        vista.exec();
+    });
 
     ui->btnRegistrarAbono->setIcon(Iconos::nuevo());
     ui->btnRegistrarDevolucion->setIcon(Iconos::cancelar());

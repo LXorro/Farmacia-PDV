@@ -106,7 +106,77 @@ implementados y probados:
    el hallazgo técnico de la colisión XA/replicación), pruebas realizadas
    y conclusiones.
 
-## 6. Pendiente (opcional)
+## 6. Siguiente cambio planeado: impresión de tickets y pago mixto
+
+Pedido del 2026-11-18. **Fase 1 implementada el 2026-11-20** (ver 6.7); faltan la fase 2 (ESC/POS) y probar con una impresora real. Decisiones tomadas: impresora térmica de **80 mm**, texto **alineado y de buen tamaño, sin saltos de línea inesperados**, con el formato sencillo de un ticket de texto (no un diseño gráfico), y la información que pide un ticket de venta en México. Lo que dice la ley está marcado como **por validar con un contador** (ver 6.4).
+
+### 6.1 Impresión (fases)
+
+1. **Fase 1 — por el driver de Windows.** `Qt6::PrintSupport` (`QPrinter`, `QPrintPreviewDialog`, `QPrinterInfo`). El ticket se arma como **texto monoespaciado por columnas** y se dibuja con una fuente de ancho fijo, de modo que cada línea mide exactamente lo que se calculó y no puede partirse sola. Sirve con cualquier impresora instalada en Windows.
+2. **Fase 2 (opcional) — ESC/POS directo.** Por TCP al puerto 9100 (red, con `QTcpSocket`; `Qt6::Network` ya está enlazado) o por el spooler en modo RAW (USB, código solo de Windows). Da corte de papel y apertura de cajón. Requiere página de códigos para acentos y `ñ` (CP858 o WPC1252).
+
+**Ancho de 80 mm:** ~72 mm imprimibles = 576 puntos a 203 dpi. La fuente A de 12 puntos da **48 columnas**; se usará **42 por defecto** (más margen y letra más grande) y es configurable de 40 a 48. El motor de layout (`util/ticketimpreso.*`) trabaja siempre en columnas, así que otro ancho (58 mm = 32 columnas, A4) solo cambia ese número.
+
+- **Configuración por equipo** (`QSettings`): impresora, ancho de papel (80 mm por defecto, 58 mm y personalizado), columnas, márgenes, tamaño de letra, copias, imprimir al cobrar (sí/no/preguntar), corte y cajón (fase 2). Pantalla «Configurar impresora» con **impresión de prueba que incluye una regla de columnas** para calibrar.
+- **Vista previa y pruebas sin impresora:** el mismo texto se envía a un PDF del mismo ancho.
+- **Dónde se imprime:** al cobrar, «Reimprimir» en el detalle del ticket, comprobante de devolución (con el estado «pendiente en terminal» del reembolso a tarjeta) y, opcional, el corte del día en formato angosto.
+- **Reglas del layout:** nombres de producto partidos por palabras (nunca a mitad de palabra salvo que no quepa), importes alineados a la derecha, columnas fijas `CANT  DESCRIPCIÓN … P.UNIT  IMPORTE`, acentos y `ñ` correctos, líneas separadoras de ancho exacto.
+
+### 6.2 Contenido del ticket
+
+Establecimiento: nombre o razón social, **RFC**, domicilio del establecimiento (calle, colonia, CP, municipio, estado), teléfono, sucursal. Venta: **folio**, fecha y hora, cajero, cliente (si se registró). Líneas: cantidad, descripción, precio unitario e importe. Totales: subtotal, **IVA desglosado por tasa** (0 % y 16 %), descuento si lo hay y total. Pago: método(s); si fue tarjeta, **autorización y últimos 4 dígitos**; efectivo recibido y **cambio**; en venta a crédito, abonos, **saldo y fecha límite**. Pie: leyenda de que no es factura y cómo solicitarla, política de devoluciones, aviso de receta retenida para antibióticos y medicamentos controlados.
+
+**Datos que hoy no existen en la base y habría que agregar** (los escribe el central y bajan a las sucursales, como el resto del catálogo):
+- `Sucursales`: razón social, RFC, domicilio completo y régimen fiscal.
+- `Productos`: **tasa de IVA** (0 % para medicina de patente con registro sanitario; 16 % para el resto, p. ej. higiene personal y suplementos) y, si se quiere, marca de «requiere receta retenida».
+- Hipótesis a confirmar: que los precios de venta **ya incluyen IVA**, de modo que el desglose se calcula hacia atrás.
+- Folio: hoy `id_ticket` avanza de 10 en 10 por sucursal (12, 22, 32…); decidir si se imprime tal cual o con prefijo de sucursal.
+- Estos cambios van en una migración nueva, **posterior a la corrección de totales** de la réplica (ver 6.5), y siguen la regla de siempre: aplicarla en todos los nodos antes de usar la versión nueva de la app.
+
+### 6.3 Pago mixto (efectivo + tarjeta / transferencia)
+
+El esquema **ya lo permite**: `Pagos` guarda una fila por pago y un ticket puede tener varias; los triggers suman `monto_pagado`. Lo que falta es la pantalla y las reglas.
+
+- **Cobrar:** nueva opción «Mixto» con una lista de pagos (método + monto). La suma de los pagos debe igualar el total en una venta de contado.
+- **Cambio:** solo sale de la parte en efectivo; en `Pagos` se registra el efectivo **aplicado** (sin el cambio) para que el corte de efectivo siga cuadrando.
+- **Tarjeta dentro de un mixto:** pide autorización (4-20 caracteres) y, opcional, los últimos 4 dígitos, igual que hoy.
+- **Devoluciones:** ya calculan por vía de pago (`m_tarjetaPagada` y `m_otrosDisponible`): a la tarjeta solo hasta lo pagado con tarjeta, y efectivo o transferencia solo por el resto. Hay que **probarlo** con tickets mixtos.
+- **Reporte diario:** «cobros por método» ya separa por fila de pago; los tickets mixtos se reparten solos.
+- **Ticket impreso:** una línea por cada método, con su monto.
+- **Abonos de ventas a crédito:** decidir si también pueden ser mixtos (hoy es un solo método por abono).
+
+### 6.4 Lo legal: por validar
+
+La app **no emite CFDI** (factura electrónica con timbrado de un PAC) y eso queda **fuera de alcance**; el ticket no sustituye a la factura. Conviene que un contador confirme la lista de datos mínimos, la tasa de IVA de cada producto y la leyenda de facturación. Lo averiguado en fuentes públicas (blogs y despachos, no el texto oficial) coincide en: medicina de patente con registro sanitario a **tasa 0 %** (no exenta); suplementos, cosméticos e higiene personal a 16 %; ambas tasas pueden ir en el mismo ticket; hay discrepancia sobre el artículo del Reglamento de la LIVA que define «medicina de patente» (6 o 7). Antes de afirmar algo de cara a un cliente, verificar en la LIVA y en la Resolución Miscelánea Fiscal vigentes.
+
+### 6.5 Dependencia con otro pendiente
+
+**Resuelto en código, pendiente de aplicar:** migración 005 (`Tickets.total` y `saldo_pendiente` pasan a `VIRTUAL`; reproducido y probado con MariaDB 10.11.14 + 13.0.2). Texto original del problema: las columnas `total` y `saldo_pendiente` de `Tickets` llegan en **0.00** al central real (MariaDB 10.11.14, con un nodo 13.x); no se reproduce con ambos lados en 13.0.2. Un ticket impreso en una sucursal sale bien (calcula en local), pero cualquier pantalla de administrador sobre el central mostrará ventas y saldos en cero hasta corregirlo. Va **antes** de esta mejora.
+
+### 6.7 Estado de la implementación (2026-11-20)
+
+**Hecho** (código en `app/src/util/ticketimpreso.*` y `app/src/dialogs/{pagomixto,vistaticket,configurarticket}dialog.*`):
+- Ticket en texto por columnas (42 por defecto, configurable de 32 a 64; 32 = 58 mm), con encabezado del establecimiento, folio, fecha, cajero y cliente, líneas, **IVA desglosado por tasa**, forma de pago (autorización y últimos 4 dígitos de la tarjeta, referencia de la transferencia, efectivo recibido y cambio), saldo y fecha límite de las ventas a crédito, devoluciones registradas y pie configurable.
+- **Vista en pantalla** con la misma fuente y columnas que el papel, **Guardar PDF** de 80 mm (fuente incrustada) e **Imprimir** por el driver de Windows (`QPrinter`). Sirve sin impresora.
+- Se abre al cobrar («Ver / imprimir ticket») y desde el detalle de cualquier ticket (también para un admin sobre el central).
+- **Pago mixto** (contado): tarjeta, transferencia y efectivo; el efectivo es lo que falta y se calcula el cambio. Se guarda una fila de `Pagos` por método (el efectivo, sin el cambio). Las devoluciones de un ticket mixto respetan la vía de pago (verificado).
+- Configuración por equipo en `QSettings` (impresora, ancho, columnas, razón social, RFC, domicilio, teléfono, pie, regla de IVA). **No hay cambios de esquema**: no requiere migración.
+
+**Pendiente / decisiones tomadas por defecto**
+- **Fase 2 (ESC/POS directo):** corte de papel y cajón. No hecha.
+- **Datos fiscales por equipo, no por sucursal en la base**; el domicilio y el teléfono salen de la sucursal si no se configuran. Si se quiere que viajen con el catálogo, hay que agregarlos a `Sucursales` (migración y orden de despliegue de siempre).
+- **Tasa de IVA según la categoría** del producto (`medicamento` a 0 %, el resto a 16 %). Es una aproximación a validar con un contador; lo correcto es una tasa por producto en `Productos`, pero esa columna nueva rompería la réplica de un nodo sin migrar.
+- **Folio = `id_ticket`** (avanza de 10 en 10 por sucursal). Sin prefijo de sucursal.
+- El **efectivo recibido y el cambio** solo se imprimen al cobrar (no se guardan en la base); una reimpresión no los muestra. El efectivo simple no pide el monto recibido.
+- **Comprobante de devolución aparte:** hoy las devoluciones salen como sección del ticket.
+- **Abonos mixtos** y el pago mixto en ventas a crédito: no incluidos.
+- **No probado con una impresora térmica real.** Verificado: texto (2,400 tickets aleatorios, ninguna línea fuera del ancho, en 6 anchos), PDF de 80 mm, impresión a una «impresora PDF» de Qt, flujo completo del cobro mixto contra MariaDB desechable y sus validaciones.
+
+### 6.6 Pruebas a agregar al manual
+
+Ticket de 80 mm: ninguna línea se parte, importes alineados, acentos correctos, nombre muy largo, 1 y 40 líneas, ticket a crédito, con tarjeta, mixto, devolución y reimpresión. Mixto: suma distinta del total, cambio, tarjeta sin autorización, devolución de un ticket mixto y corte de efectivo. Impresora apagada, sin papel, o sin impresora configurada: mensaje claro y la venta **no se pierde**.
+
+## 7. Pendiente (opcional)
 
 - Pulir la app Qt: validaciones adicionales, reportes de venta, pantalla
   de inventario/lotes.

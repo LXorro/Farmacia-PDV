@@ -108,6 +108,11 @@ Se elige la fecha (hasta hoy) y, si es un admin sobre el central, una sucursal o
 - Cada sucursal registra con la hora de su equipo (`DATE(fecha)` sobre lo guardado); la bitácora va en UTC y se convierte a hora local.
 - Con la vista de todas las sucursales, los datos de una sucursal sin conexión con el central pueden estar incompletos (el propio reporte lo avisa).
 
+### Ticket impreso y pago mixto
+
+- **Ticket** (`util/ticketimpreso.*`, `dialogs/vistaticketdialog.*`): texto por columnas con fuente de ancho fijo (Space Mono, incluida en la app), de modo que ninguna línea se parte sola. Se ve en pantalla, se guarda en PDF de 80 mm y se imprime con `QPrinter`; se abre al cobrar y desde el detalle del ticket. Configuración por equipo en `QSettings` (clave `ticket/*`): impresora, ancho, columnas, razón social, RFC, domicilio, teléfono, pie, regla de IVA. IVA desglosado por tasa según la categoría del producto (`medicamento` a 0 %): aproximación por validar con un contador. Requiere `Qt6::PrintSupport`.
+- **Pago mixto** (`dialogs/pagomixtodialog.*`): venta de contado con tarjeta + transferencia + efectivo; el efectivo es lo que falta. Una fila de `Pagos` por método (efectivo sin el cambio). Las devoluciones respetan la vía de pago. Sin cambios de esquema.
+
 ### Diseño de la interfaz
 
 - **Menú lateral agrupado** (Ventas, Inventario, Administración). Cada entrada guarda en `Qt::UserRole` el índice de su página en el `QStackedWidget`, porque el menú ya no coincide 1 a 1 con él; las secciones no son seleccionables.
@@ -164,7 +169,7 @@ Plan_Proyecto.md         Alcance y diseño · Farmacia_actualizado.md: esquema b
 | Portátil Linux (Principal) | aplicada | aplicada | aplicada (15-nov) | Réplica de bajada recuperada tras aplicar la 003; `my.cnf` con `binlog-do-db` |
 | Equipo Windows (Norte) | desconocido | desconocido | desconocido | Sin conexión desde hace días; con una base vieja habrá que aplicar 002, 003 y 004 y regenerar su `my.ini` (con `binlog-do-db` y `Permisos_Temporales`) |
 
-La 004 falta solo en el equipo Windows (sin conexión: `sucursal_11` no conecta, «Connection timed out» a su puerto 3307). Hasta aplicarla ahí, el cobro con tarjeta y las devoluciones de la versión nueva fallan en ese equipo (columnas y valor de enum inexistentes). Verificada en el central el 15-nov: columnas de tarjeta presentes y `sucursal_1` al día.
+La **005** (totales `VIRTUAL`, ver incidente 7) está preparada y **pendiente** en todos los nodos. La 004 falta solo en el equipo Windows (sin conexión: `sucursal_11` no conecta, «Connection timed out» a su puerto 3307). Hasta aplicarla ahí, el cobro con tarjeta y las devoluciones de la versión nueva fallan en ese equipo (columnas y valor de enum inexistentes). Verificada en el central el 15-nov: columnas de tarjeta presentes y `sucursal_1` al día.
 
 ## 11. Incidentes y lecciones
 
@@ -174,6 +179,8 @@ La 004 falta solo en el equipo Windows (sin conexión: `sucursal_11` no conecta,
 4. **«No trusted» en Windows al conectar por IP:** el certificado vale solo para el nombre `.ts.net`; Windows verifica nombre y cadena, el cliente de Linux no. Usar siempre el nombre.
 5. **Botón Eliminar deshabilitado que parecía activo:** el selector por nombre del QSS le ganaba a `:disabled`; ver diseño.
 6. **Contraseña de registro «perdida»:** `preparar-central.sh` la imprime una sola vez. No se guarda en ningún archivo; anotarla.
+
+7. **`Tickets.total` y `saldo_pendiente` llegaban en 0.00 al central.** Eran columnas calculadas **guardadas** (`STORED`). El nodo (MariaDB 13.0.2) inserta el ticket con subtotal 0 y un trigger lo actualiza después; el central (10.11.14) no recalcula esas columnas al aplicar las actualizaciones por filas. **Reproducido** con un 10.11.14 oficial (firma GPG verificada) como central y un 13.0.2 como nodo; con 13.0.2 en ambos lados no falla. Solución: la migración 005 las pasa a `VIRTUAL` (se calculan al leer, no se replican); `schema.sql` ya las define así. Probado: idempotente, esquema nuevo = migrado en las 18 tablas, venta contado/crédito/abonos/tarjeta replicada bien, y la réplica no se rompe con un solo lado convertido (en cualquier orden; conviene el central primero). Sin determinar si la causa es la versión del esclavo o la mezcla de versiones. `Ventas.subtotal` también es `STORED` pero nada la actualiza después de insertarla, así que no se ve afectada.
 
 ## 12. Limitaciones conocidas
 
@@ -191,6 +198,7 @@ La 004 falta solo en el equipo Windows (sin conexión: `sucursal_11` no conecta,
 
 - Compilación limpia en Linux; asistente, login de admin contra el central, concesión de un permiso temporal y su efecto en una sesión de empleado (`ana`) comprobados por el usuario.
 - Migraciones 002, 003 y 004, datos de ejemplo, `CHECK` de 72 h, vigencia en cualquier zona horaria y cálculo de reembolsos por vía de pago: probados en MariaDB desechables (idempotentes y con esquema idéntico al de una instalación nueva).
+- Ticket y pago mixto: arnés Qt contra MariaDB desechable (cobro mixto de punta a punta con sus 8 validaciones, devoluciones sobre un ticket mixto, reimpresión, configuración, PDF de 80 mm y salida por `QPrinter` a PDF); 2,400 tickets aleatorios sin ninguna línea más ancha que sus columnas. **Sin impresora térmica real.**
 - Reporte diario y PDF: generados contra datos de ejemplo y un día vacío (cifras coinciden); pantalla, menú agrupado, encabezados, jerarquía de botones, insignia y diálogos: capturas con el arnés sin pantalla.
 - **Sin probar de punta a punta:** una venta de empleado que llegue al central por la réplica de subida; el flujo completo de tarjeta (cobro con autorización, devolución solicitada, folio, completada) en la interfaz real; `demo.sh` (solo se ajustaron nombres de columna); `docs/Reporte.md` y `diagrama_arquitectura.md` describen la demo anterior (puertos 13306/13307), no el modelo por sesión.
 
@@ -199,6 +207,10 @@ La 004 falta solo en el equipo Windows (sin conexión: `sucursal_11` no conecta,
 **Para cerrar el despliegue**
 - Aplicar la migración 004 en el equipo Windows (y 002/003 antes, si conserva una base vieja); revisar que su firewall deje entrar el puerto de MariaDB desde `100.64.0.0/10`.
 - Probar en la interfaz el flujo de tarjeta y la venta de subida.
+
+**Planeado (ver `Plan_Proyecto.md`, sección 6)**
+- **Implementado el 2026-11-20 (sin commitear):** ticket de **80 mm** (texto por columnas, 42 por defecto; vista en pantalla, PDF e impresión por el driver) y **pago mixto**. Pendiente: fase ESC/POS (corte y cajón), probar con impresora real, tasa de IVA por producto, datos fiscales en la base y comprobante de devolución aparte; lo legal está por validar con un contador. Ver `Plan_Proyecto.md` §6.7.
+- **Aplicar la migración 005** (primero en el central, luego en cada nodo): `sudo db/migraciones/aplicar-005.sh`. Corrige el defecto de los totales en 0.00 en el central (incidente 7).
 
 **Ideas abiertas (no pedidas aún)**
 - Gráfica de ventas de 7 días en el Inicio y modo oscuro.
