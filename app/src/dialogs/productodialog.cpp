@@ -1,4 +1,5 @@
 #include "productodialog.h"
+#include "../util/validacion.h"
 #include "ui_productodialog.h"
 
 #include <QMessageBox>
@@ -7,6 +8,9 @@
 
 ProductoDialog::ProductoDialog(QWidget *parent) : QDialog(parent), ui(new Ui::ProductoDialog) {
     ui->setupUi(this);
+    Validacion::filtrarTextoComercial(ui->lineNombre, 100);
+    Validacion::filtrarTextoComercial(ui->lineMarca, 100);
+    Validacion::filtrarCodigoBarras(ui->lineCodigoBarras);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &ProductoDialog::guardar);
     cargarCombos();
 }
@@ -54,8 +58,22 @@ void ProductoDialog::cargarProducto() {
 }
 
 void ProductoDialog::guardar() {
-    if (ui->lineNombre->text().trimmed().isEmpty()) {
-        QMessageBox::warning(this, "Validación", "El nombre es obligatorio.");
+    using namespace Validacion;
+    if (rechazar(this, ui->lineNombre, textoComercial(ui->lineNombre->text(), "El nombre del producto", true, 100))
+        || rechazar(this, ui->lineMarca, textoComercial(ui->lineMarca->text(), "La marca", false, 100))
+        || rechazar(this, ui->lineCodigoBarras, codigoBarras(ui->lineCodigoBarras->text())))
+        return;
+    {
+        const QString error = textoLibre(ui->textDescripcion->toPlainText(), "La descripción", 1000);
+        if (!error.isEmpty()) {
+            QMessageBox::warning(this, "Validación", error);
+            ui->textDescripcion->setFocus();
+            return;
+        }
+    }
+    if (ui->spinPrecioVenta->value() < 0.01) {
+        QMessageBox::warning(this, "Validación", "El precio de venta debe ser mayor que cero.");
+        ui->spinPrecioVenta->setFocus();
         return;
     }
 
@@ -75,8 +93,8 @@ void ProductoDialog::guardar() {
         query.bindValue(":id", m_idProducto);
     }
 
-    query.bindValue(":nombre", ui->lineNombre->text().trimmed());
-    query.bindValue(":marca", ui->lineMarca->text().trimmed());
+    query.bindValue(":nombre", normalizar(ui->lineNombre->text()));
+    query.bindValue(":marca", normalizar(ui->lineMarca->text()));
     query.bindValue(":descripcion", ui->textDescripcion->toPlainText());
     // UNIQUE permite varios NULL pero no varias cadenas vacías.
     const QString codigo = ui->lineCodigoBarras->text().trimmed();

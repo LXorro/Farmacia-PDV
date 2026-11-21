@@ -1,4 +1,5 @@
 #include "lotedialog.h"
+#include "../util/validacion.h"
 #include "ui_lotedialog.h"
 #include "../database/sesionactual.h"
 #include "../util/bitacora.h"
@@ -10,6 +11,7 @@
 
 LoteDialog::LoteDialog(QWidget *parent) : QDialog(parent), ui(new Ui::LoteDialog) {
     ui->setupUi(this);
+    Validacion::filtrarNumeroLote(ui->lineNumeroLote);
     ui->dateFechaCaducidad->setDisplayFormat("dd/MM/yyyy");
     ui->dateFechaCaducidad->setDate(QDate::currentDate().addYears(1));
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &LoteDialog::guardar);
@@ -115,6 +117,25 @@ void LoteDialog::guardar() {
         QMessageBox::warning(this, "Sin permiso",
                              "Tu permiso temporal ya no está vigente. Pide a un administrador que lo renueve.");
         reject();
+        return;
+    }
+
+    if (Validacion::rechazar(this, ui->lineNumeroLote, Validacion::numeroLote(ui->lineNumeroLote->text())))
+        return;
+    if (ui->spinCosto->value() < 0.01) {
+        QMessageBox::warning(this, "Validación", "El costo unitario debe ser mayor que cero.");
+        ui->spinCosto->setFocus();
+        return;
+    }
+    // Un lote nuevo no puede nacer caducado; y una caducidad a más de 15 años es casi seguro un error de captura.
+    if (m_idLote < 0 && ui->dateFechaCaducidad->date() < QDate::currentDate()) {
+        QMessageBox::warning(this, "Validación", "No se puede dar de alta un lote con fecha de caducidad anterior a hoy.");
+        ui->dateFechaCaducidad->setFocus();
+        return;
+    }
+    if (ui->dateFechaCaducidad->date() > QDate::currentDate().addYears(15)) {
+        QMessageBox::warning(this, "Validación", "La fecha de caducidad está a más de 15 años: revísala.");
+        ui->dateFechaCaducidad->setFocus();
         return;
     }
 

@@ -1,4 +1,5 @@
 #include "registrodialog.h"
+#include "../util/validacion.h"
 #include "ui_registrodialog.h"
 #include "../util/passwordutil.h"
 
@@ -8,6 +9,9 @@
 
 RegistroDialog::RegistroDialog(QWidget *parent) : QDialog(parent), ui(new Ui::RegistroDialog) {
     ui->setupUi(this);
+    Validacion::filtrarNombreUsuario(ui->lineUsuario);
+    Validacion::limitarLargo(ui->lineContrasena, 64);
+    Validacion::limitarLargo(ui->lineConfirmar, 64);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &RegistroDialog::guardar);
     // El administrador inicial no está ligado a un empleado (aún no existe ninguno).
     ui->labelEmpleado->setVisible(false);
@@ -23,14 +27,9 @@ void RegistroDialog::guardar() {
     QString contrasena = ui->lineContrasena->text();
     QString confirmar = ui->lineConfirmar->text();
 
-    if (usuario.isEmpty() || contrasena.isEmpty()) {
-        QMessageBox::warning(this, "Validación", "Usuario y contraseña son obligatorios.");
+    if (Validacion::rechazar(this, ui->lineUsuario, Validacion::nombreUsuario(usuario))
+        || Validacion::rechazar(this, ui->lineContrasena, Validacion::contrasena(contrasena)))
         return;
-    }
-    if (contrasena.length() < 4) {
-        QMessageBox::warning(this, "Validación", "La contraseña debe tener al menos 4 caracteres.");
-        return;
-    }
     if (contrasena != confirmar) {
         QMessageBox::warning(this, "Validación", "Las contraseñas no coinciden.");
         return;

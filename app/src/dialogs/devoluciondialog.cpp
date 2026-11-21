@@ -1,4 +1,5 @@
 #include "devoluciondialog.h"
+#include "../util/validacion.h"
 #include "ui_devoluciondialog.h"
 #include "../database/sesionactual.h"
 #include "pagotarjetadialog.h"
@@ -11,6 +12,7 @@
 
 DevolucionDialog::DevolucionDialog(QWidget *parent) : QDialog(parent), ui(new Ui::DevolucionDialog) {
     ui->setupUi(this);
+    Validacion::limitarLargo(ui->lineMotivo, 200);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &DevolucionDialog::guardar);
     connect(ui->comboTipoReembolso, &QComboBox::currentTextChanged, this, &DevolucionDialog::actualizarTipo);
     actualizarTipo();
@@ -137,6 +139,14 @@ void DevolucionDialog::guardar() {
                     "Elige «tarjeta», «cambio» o «saldo_a_favor».")
                 .arg(tipo).arg(m_otrosDisponible, 0, 'f', 2));
         return;
+    }
+    {
+        const QString error = Validacion::textoLibre(ui->lineMotivo->text(), "El motivo", 200);
+        if (!error.isEmpty()) {
+            QMessageBox::warning(this, "Motivo", error);
+            ui->lineMotivo->setFocus();
+            return;
+        }
     }
     QString folio = ui->lineFolio->text().trimmed().toUpper();
     if (tipo == "tarjeta" && !folio.isEmpty() && !PagoTarjetaDialog::folioValido(folio)) {

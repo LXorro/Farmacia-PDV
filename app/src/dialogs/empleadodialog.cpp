@@ -1,4 +1,5 @@
 #include "empleadodialog.h"
+#include "../util/validacion.h"
 #include "ui_empleadodialog.h"
 
 #include <QMessageBox>
@@ -7,6 +8,12 @@
 
 EmpleadoDialog::EmpleadoDialog(QWidget *parent) : QDialog(parent), ui(new Ui::EmpleadoDialog) {
     ui->setupUi(this);
+    Validacion::filtrarNombrePersona(ui->lineNombre);
+    Validacion::filtrarNombrePersona(ui->lineApellidoPaterno);
+    Validacion::filtrarNombrePersona(ui->lineApellidoMaterno);
+    Validacion::filtrarTextoComercial(ui->linePuesto, 50);
+    Validacion::filtrarTelefono(ui->lineTelefono);
+    Validacion::filtrarCorreo(ui->lineCorreo);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &EmpleadoDialog::guardar);
     cargarCombos();
 }
@@ -48,10 +55,14 @@ void EmpleadoDialog::cargarEmpleado() {
 }
 
 void EmpleadoDialog::guardar() {
-    if (ui->lineNombre->text().trimmed().isEmpty()) {
-        QMessageBox::warning(this, "Validación", "El nombre es obligatorio.");
+    using namespace Validacion;
+    if (rechazar(this, ui->lineNombre, nombrePersona(ui->lineNombre->text(), "El nombre", true))
+        || rechazar(this, ui->lineApellidoPaterno, nombrePersona(ui->lineApellidoPaterno->text(), "El apellido paterno", false))
+        || rechazar(this, ui->lineApellidoMaterno, nombrePersona(ui->lineApellidoMaterno->text(), "El apellido materno", false))
+        || rechazar(this, ui->linePuesto, textoComercial(ui->linePuesto->text(), "El puesto", false, 50))
+        || rechazar(this, ui->lineTelefono, telefono(ui->lineTelefono->text()))
+        || rechazar(this, ui->lineCorreo, correo(ui->lineCorreo->text())))
         return;
-    }
     if (ui->comboSucursal->currentIndex() < 0) {
         QMessageBox::warning(this, "Validación", "Selecciona una sucursal.");
         return;
@@ -72,10 +83,10 @@ void EmpleadoDialog::guardar() {
     }
 
     query.bindValue(":sucursal", ui->comboSucursal->currentData());
-    query.bindValue(":nombre", ui->lineNombre->text().trimmed());
-    query.bindValue(":apPaterno", ui->lineApellidoPaterno->text().trimmed());
-    query.bindValue(":apMaterno", ui->lineApellidoMaterno->text().trimmed());
-    query.bindValue(":puesto", ui->linePuesto->text().trimmed());
+    query.bindValue(":nombre", normalizar(ui->lineNombre->text()));
+    query.bindValue(":apPaterno", normalizar(ui->lineApellidoPaterno->text()));
+    query.bindValue(":apMaterno", normalizar(ui->lineApellidoMaterno->text()));
+    query.bindValue(":puesto", normalizar(ui->linePuesto->text()));
     query.bindValue(":telefono", ui->lineTelefono->text().trimmed());
     query.bindValue(":correo", ui->lineCorreo->text().trimmed());
     query.bindValue(":estado", ui->comboEstado->currentText());

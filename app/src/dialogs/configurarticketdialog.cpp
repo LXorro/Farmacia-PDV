@@ -1,5 +1,6 @@
 #include "configurarticketdialog.h"
 #include "../util/ticketimpreso.h"
+#include "../util/validacion.h"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -84,6 +85,19 @@ ConfigurarTicketDialog::ConfigurarTicketDialog(QWidget *parent) : QDialog(parent
 }
 
 void ConfigurarTicketDialog::aceptar() {
+    {
+        const QString error = Validacion::textoComercial(m_nombre->text(), "El nombre comercial", false, 100);
+        const QString errorRazon = Validacion::textoComercial(m_razonSocial->text(), "La razón social", false, 100);
+        const QString errorDom = Validacion::direccion(m_domicilio->text());
+        const QString errorTel = Validacion::telefono(m_telefono->text());
+        const QString errorPie = Validacion::textoLibre(m_pie->toPlainText(), "El pie del ticket", 300);
+        for (const QString &e : {error, errorRazon, errorDom, errorTel, errorPie}) {
+            if (!e.isEmpty()) {
+                QMessageBox::warning(this, "Validación", e);
+                return;
+            }
+        }
+    }
     if (!Configuracion::rfcValido(m_rfc->text())) {
         QMessageBox::warning(this, "RFC", "El RFC debe tener 12 caracteres (persona moral) o 13 (persona física), "
                                           "por ejemplo ABC123456AB1. Déjalo vacío si aún no lo tienes.");

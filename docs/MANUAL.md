@@ -545,6 +545,34 @@ Un empleado **sin permiso** solo hace lo esencial: vender, cobrar, consultar, re
 
 ---
 
+### 9.10 Reglas de captura de datos
+
+Los formularios **no dejan teclear** los caracteres que no corresponden (por ejemplo, un nombre no admite números ni símbolos) y, si se **pega** un texto con algún carácter no permitido, se rechaza completo. Al guardar se vuelve a comprobar todo y el aviso dice qué campo está mal. Los espacios sobrantes se limpian solos («  María   José  » se guarda como «María José»).
+
+| Campo | Qué admite | Ejemplos válidos | Se rechaza |
+|---|---|---|---|
+| **Nombre y apellidos** (clientes, empleados) | Letras con acentos y ñ, espacios, apóstrofo, guion y punto; 2 a 50 caracteres | María José, O'Connor, Ana-Lucía, J. Pérez | Juan3, Ana@, Ana#López, emojis, solo símbolos |
+| **Nombre de producto, marca, empresa, sucursal, categoría, tipo, puesto** | Letras, números, espacios y `. , ' & ( ) / % + # : - °`; debe empezar con letra o número y llevar al menos una letra; hasta 100 (categoría, tipo y puesto: 50) | Paracetamol 500mg, Suero 0.9%, Farmex & Co. | `<b>`, `*`, `;`, `!`, `?`, `@`, `{ }`, solo números |
+| **Teléfono** | De 7 a 15 dígitos; puede llevar espacios, guiones, paréntesis y un `+` al inicio; hasta 20 caracteres | 667 555 0001, (667) 555-0001, +52 667 555 0001 | abc, 12345, 555+123 |
+| **Correo** | `nombre@dominio.com`, sin espacios; hasta 100 | ana.lopez@farmacia.com.mx | ana@x, ana@@x.com, con espacios |
+| **Dirección** | Letras, números, espacios y `. , # / ( ) & : - °`; hasta 200 | Av. Principal #100, Col. Centro | `<script>`, `$`, `;` |
+| **Nombre de usuario** | 3 a 30: letras sin acentos, números, punto, guion y guion bajo; sin espacios | ana, Ana.Lopez, luis_2 | juan perez, josé, ab |
+| **Contraseña** (nuevas o al cambiarla) | 6 a 64 caracteres, con **al menos una letra y un número**, sin espacios | Ana2026, Farmacia2026! | abc123 con espacio, abcdefg, 123456, corta |
+| **Código de barras** | Letras, números y guion; 4 a 30; opcional; no se repite | 7501000000011, ABC-1234 | 75 01, 12, con símbolos |
+| **Número de lote** | Letras, números y `. _ / -`; hasta 50; obligatorio; sin espacios | PARA-2611, A.12/B | L 1, L;1, vacío |
+| **Descripciones y motivos** | Texto libre sin `<` ni `>` ni caracteres de control; producto: 1000, categoría: 500, motivo de devolución: 200, pie del ticket: 300 | Caja con 20 tabletas | `<script>`, textos más largos |
+| **Precio de venta y costo unitario** | Mayores que cero | 35.00 | 0.00 |
+| **Caducidad de un lote nuevo** | Hoy o después, y no más de 15 años adelante | — | Fecha pasada; 2045 |
+| **Dirección del central** (asistente) | Nombre de equipo o IP, sin `http://`, espacios ni `/` | ip-172-31-41-253.tail560a17.ts.net | http://x.com, x y |
+
+**Repetidos que se rechazan:** cliente con el mismo nombre y teléfono en la misma sucursal; proveedor, sucursal y categoría con el mismo nombre; producto con el mismo código de barras; usuario con un nombre ya usado o un empleado que ya tiene cuenta.
+
+**Límites de lo que se escribe en pantallas de entrada:** usuario de inicio de sesión 50, contraseña 128, búsqueda del Punto de Venta 100.
+
+**Datos viejos:** un registro creado antes de estas reglas que no las cumpla (por ejemplo, un correo `SDAD@ADAS` sin dominio) no se podrá volver a guardar hasta corregirlo.
+
+---
+
 # PARTE C — PLAN DE PRUEBAS
 
 ## 10. Cómo usar este plan
@@ -743,6 +771,56 @@ Productos del catálogo de ejemplo (códigos de `db/seed.sql` en equipo único; 
 | TK-17 | Reinicio de nivel 1 del equipo | La configuración del ticket se borra con el resto (volver a configurarla) |
 | TK-18 | Desglose de IVA: producto de categoría «medicamento» y otro de higiene en el mismo ticket | IVA 0 % sobre el medicamento e IVA 16 % sobre el otro; subtotal + IVA = total |
 
+## 15c. Validación de campos
+
+Para cada fila, intenta **teclear** el valor y luego **pegarlo**, y pulsa Guardar. «Se rechaza» significa: aviso claro que nombra el campo, el cursor en ese campo y **ningún registro nuevo** en la lista.
+
+| ID | Formulario · campo | Valor | Esperado |
+|---|---|---|---|
+| VC-01 | Cliente · nombre | `Juan3` | Al teclear, el 3 no aparece; al pegar, se rechaza completo |
+| VC-02 | Cliente · nombre | `Ana@López`, `Ana#`, `<b>Ana</b>` | No se pueden teclear los símbolos; guardar un valor forzado se rechaza |
+| VC-03 | Cliente · nombre | `María José`, `O'Connor`, `Ana-Lucía`, `Ñandú` | Se aceptan |
+| VC-04 | Cliente · nombre | `  María   José  ` | Se guarda como `María José` |
+| VC-05 | Cliente · nombre | una sola letra, o 51 caracteres | Se rechaza (mínimo 2, máximo 50) |
+| VC-06 | Cliente · apellidos | `Pérez9`, `Pé$rez` | Se rechaza; vacío está permitido |
+| VC-07 | Cliente · teléfono | `abc`, `12345`, `55512300011234567` | Se rechaza (7 a 15 dígitos) |
+| VC-08 | Cliente · teléfono | `667 555 0001`, `(667) 555-0001`, `+52 667 555 0001` | Se acepta |
+| VC-09 | Cliente · correo | `juan@x`, `juan@@x.com`, `juan @x.com` | Se rechaza |
+| VC-10 | Cliente · dirección | `Calle <b>1</b>`, `Av. $100` | Se rechaza |
+| VC-11 | Cliente · repetido | Mismo nombre completo y teléfono en la misma sucursal | «Cliente repetido» |
+| VC-12 | Empleado · nombre, apellidos | Igual que VC-01 a VC-06 | Igual |
+| VC-13 | Empleado · puesto | `Cajero*`, `<x>`; `Cajero`, `Químico Farmacobiólogo` | Los dos primeros se rechazan; los otros se aceptan |
+| VC-14 | Usuario · nombre | `juan perez`, `josé`, `ab`, `a'b` | Se rechaza |
+| VC-15 | Usuario · nombre | `ana`, `Ana.Lopez`, `luis_2` | Se acepta |
+| VC-16 | Usuario · contraseña | `abc`, `abcdefgh`, `12345678`, `abc 1234` | Se rechaza (6+, con letra y número, sin espacios) |
+| VC-17 | Usuario · contraseña | `Ana2026x` | Se acepta |
+| VC-18 | Usuario · editar | Contraseña vacía | No se cambia; con un valor nuevo, debe cumplir la política |
+| VC-19 | Usuario · repetido | Un nombre de usuario ya existente | Se rechaza |
+| VC-20 | Administrador inicial | Usuario con espacio; contraseña de 4 caracteres; confirmación distinta | Se rechaza cada caso |
+| VC-21 | Producto · nombre | `Paracetamol <b>`, `Prod*`, `Prod;`, solo `500` | Se rechaza |
+| VC-22 | Producto · nombre | `Paracetamol 500mg`, `Suero 0.9%`, `Naproxeno 250mg/5ml` | Se acepta |
+| VC-23 | Producto · marca | `Gen*Far` | Se rechaza |
+| VC-24 | Producto · código de barras | `75 01`, `12`, `12;34` | Se rechaza; vacío y `7501000000011` se aceptan |
+| VC-25 | Producto · precio de venta | `0.00` | «debe ser mayor que cero» |
+| VC-26 | Producto · descripción | `a<b>c` | Se rechaza |
+| VC-27 | Producto · código repetido | El código de otro producto | «Código duplicado» |
+| VC-28 | Proveedor | Nombre `Farma*Max`; teléfono `abc`; correo `ventas@` | Se rechaza cada uno |
+| VC-29 | Proveedor · repetido | El nombre de otro proveedor (aunque cambien mayúsculas) | «Proveedor repetido» |
+| VC-30 | Sucursal | Nombre `Sucursal <1>`; teléfono `12` | Se rechaza |
+| VC-31 | Sucursal · repetida | El nombre de otra sucursal | «Sucursal repetida» |
+| VC-32 | Categoría | Nombre `Gripe$`; descripción con `<`; repetida | Se rechaza |
+| VC-33 | Lote · número | `L 1`, `L;1`, vacío | Se rechaza |
+| VC-34 | Lote · costo | `0.00` | «debe ser mayor que cero» |
+| VC-35 | Lote · caducidad (alta) | Ayer; dentro de 16 años | Se rechaza; mañana o dentro de 2 años se acepta |
+| VC-36 | Lote · editar uno ya caducado | Cambiar la cantidad sin tocar la fecha | Se permite (solo el alta exige fecha futura) |
+| VC-37 | Devolución · motivo | 201 caracteres; `<script>` | No deja escribir más de 200; `<` se rechaza |
+| VC-38 | Asistente · dirección del central | `http://x.com`, `x y`, `x.com/ruta`, vacía | Se rechaza con la indicación de usar el nombre `.ts.net` |
+| VC-39 | Configurar ticket | RFC `XX123`; razón social con `*`; pie con `<` | Se rechaza |
+| VC-40 | Inicio de sesión | 200 caracteres en usuario o contraseña | Los campos no pasan de 50 y 128 |
+| VC-41 | Punto de Venta · búsqueda | 500 caracteres; `%`; `' OR 1=1 --` | No pasa de 100; sin error de SQL ni resultados raros |
+| VC-42 | Cualquier campo | Pegar un emoji o un carácter invisible | Se rechaza o se limpia; no se guarda basura |
+| VC-43 | Datos viejos | Editar un registro anterior con datos que no cumplen (p. ej. correo sin dominio) | No guarda hasta corregirlo; el aviso nombra el campo |
+
 ## 16. Catálogo, inventario, clientes, administración
 
 | ID | Prueba | Esperado |
@@ -750,14 +828,14 @@ Productos del catálogo de ejemplo (códigos de `db/seed.sql` en equipo único; 
 | C-01 | Admin: crear producto con código de barras nuevo | Se crea; baja a las sucursales en ≤ 1 min |
 | C-02 | Código de barras **repetido** | Rechazado (único) |
 | C-03 | Campos obligatorios vacíos | Mensajes de validación; no guarda |
-| C-04 | Texto muy largo en nombre/descr. | Rechaza o recorta sin error de SQL visible |
-| C-05 | Caracteres especiales y acentos (`Ñandú`, `’`, `😀`) | Se guardan y se ven bien en el central y en la sucursal |
+| C-04 | Texto muy largo en nombre o descripción | El campo no deja teclear más del largo permitido; pegar un texto más largo se recorta o se rechaza con aviso; sin error de SQL visible |
+| C-05 | Caracteres especiales y acentos en un nombre de producto (`Ñandú`, `Té 3-en-1`, `D’Angelo`, `😀`, `™`) | Los acentos, la ñ y el apóstrofo se aceptan y se ven bien en el central y en la sucursal; el emoji y `™` se rechazan (ver VC-21 a VC-23) |
 | C-06 | Precio negativo / 0 / con 3 decimales / `abc` | Negativo y texto rechazados |
 | C-07 | Editar precio sugerido | Tickets viejos conservan su precio |
 | C-08 | Empleado **sin** permiso intenta fijar precio propio | Botón no disponible o rechazado |
 | C-09 | Empleado **con** permiso temporal fija «Precio en mi sucursal» | Se guarda; la venta usa ese precio; queda en bitácora |
 | C-10 | Permiso vence a mitad de la sesión | El siguiente guardado se rechaza (se vuelve a comprobar al guardar) |
-| C-11 | Crear lote con caducidad pasada | Advertencia/rechazo o estado `caducado`; anota |
+| C-11 | Crear lote con caducidad pasada | Se rechaza: «No se puede dar de alta un lote con fecha de caducidad anterior a hoy» (VC-35). Editar uno ya caducado sí se permite |
 | C-12 | Lote con cantidad 0 o negativa | Rechazado |
 | C-13 | Número de lote repetido (mismo producto/sucursal) | Rechazado o aceptado según el diseño; anota |
 | C-14 | Costo unitario mayor al precio | Permitido o advertido; anota |
@@ -849,7 +927,7 @@ Gravedad:  Bloqueante · Alta · Media · Baja
 ## 21. Criterios de aceptación para dar por buena la entrega
 
 - [ ] Prueba de humo (H-01…H-10) completa en **cada** equipo instalado.
-- [ ] Todas las filas I-, L-, V-, C-, PM- y TK- marcadas; los defectos *Bloqueante/Alta* corregidos o documentados.
+- [ ] Todas las filas I-, L-, V-, C-, PM-, TK- y VC- marcadas; los defectos *Bloqueante/Alta* corregidos o documentados.
 - [ ] N-01…N-04 y N-16 superadas (la réplica no pierde ni duplica datos).
 - [ ] R-01…R-07 superadas **sin** tocar el central.
 - [ ] Ninguna contraseña de `root`, registro o remota en el equipo (S-01/S-02).

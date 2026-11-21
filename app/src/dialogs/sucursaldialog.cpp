@@ -1,4 +1,5 @@
 #include "sucursaldialog.h"
+#include "../util/validacion.h"
 #include "ui_sucursaldialog.h"
 
 #include <QMessageBox>
@@ -7,6 +8,9 @@
 
 SucursalDialog::SucursalDialog(QWidget *parent) : QDialog(parent), ui(new Ui::SucursalDialog) {
     ui->setupUi(this);
+    Validacion::filtrarTextoComercial(ui->lineNombre, 100);
+    Validacion::filtrarDireccion(ui->lineDireccion);
+    Validacion::filtrarTelefono(ui->lineTelefono);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &SucursalDialog::guardar);
 }
 
@@ -37,8 +41,17 @@ void SucursalDialog::cargarSucursal() {
 }
 
 void SucursalDialog::guardar() {
-    if (ui->lineNombre->text().trimmed().isEmpty()) {
-        QMessageBox::warning(this, "Validación", "El nombre es obligatorio.");
+    using namespace Validacion;
+    if (rechazar(this, ui->lineNombre, textoComercial(ui->lineNombre->text(), "El nombre de la sucursal", true, 100))
+        || rechazar(this, ui->lineDireccion, direccion(ui->lineDireccion->text()))
+        || rechazar(this, ui->lineTelefono, telefono(ui->lineTelefono->text())))
+        return;
+    QSqlQuery repetido;
+    repetido.prepare("SELECT COUNT(*) FROM Sucursales WHERE nombre = :n AND id_sucursal <> :id");
+    repetido.bindValue(":n", normalizar(ui->lineNombre->text()));
+    repetido.bindValue(":id", m_idSucursal);
+    if (repetido.exec() && repetido.next() && repetido.value(0).toInt() > 0) {
+        QMessageBox::warning(this, "Sucursal repetida", "Ya existe una sucursal con ese nombre.");
         return;
     }
 

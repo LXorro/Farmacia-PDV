@@ -1,4 +1,5 @@
 #include "categoriadialog.h"
+#include "../util/validacion.h"
 #include "ui_categoriadialog.h"
 
 #include <QMessageBox>
@@ -7,6 +8,8 @@
 
 CategoriaDialog::CategoriaDialog(QWidget *parent) : QDialog(parent), ui(new Ui::CategoriaDialog) {
     ui->setupUi(this);
+    Validacion::filtrarTextoComercial(ui->lineNombre, 50);
+    Validacion::filtrarTextoComercial(ui->lineTipo, 50);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &CategoriaDialog::guardar);
 }
 
@@ -35,8 +38,24 @@ void CategoriaDialog::cargarCategoria() {
 }
 
 void CategoriaDialog::guardar() {
-    if (ui->lineNombre->text().trimmed().isEmpty()) {
-        QMessageBox::warning(this, "Validación", "El nombre es obligatorio.");
+    using namespace Validacion;
+    if (rechazar(this, ui->lineNombre, textoComercial(ui->lineNombre->text(), "El nombre de la categoría", true, 50))
+        || rechazar(this, ui->lineTipo, textoComercial(ui->lineTipo->text(), "El tipo", false, 50)))
+        return;
+    {
+        const QString error = textoLibre(ui->textDescripcion->toPlainText(), "La descripción", 500);
+        if (!error.isEmpty()) {
+            QMessageBox::warning(this, "Validación", error);
+            ui->textDescripcion->setFocus();
+            return;
+        }
+    }
+    QSqlQuery repetido;
+    repetido.prepare("SELECT COUNT(*) FROM Categorias WHERE nombre = :n AND id_categoria <> :id");
+    repetido.bindValue(":n", normalizar(ui->lineNombre->text()));
+    repetido.bindValue(":id", m_idCategoria);
+    if (repetido.exec() && repetido.next() && repetido.value(0).toInt() > 0) {
+        QMessageBox::warning(this, "Categoría repetida", "Ya existe una categoría con ese nombre.");
         return;
     }
 

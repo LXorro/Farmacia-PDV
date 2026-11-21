@@ -1,4 +1,5 @@
 #include "configurarbddialog.h"
+#include "../util/validacion.h"
 #include "ui_configurarbddialog.h"
 #include "../database/databasemanager.h"
 #include "../database/dbconfig.h"
@@ -11,6 +12,11 @@
 
 ConfigurarBdDialog::ConfigurarBdDialog(QWidget *parent) : QDialog(parent), ui(new Ui::ConfigurarBdDialog) {
     ui->setupUi(this);
+    Validacion::limitarLargo(ui->lineUsuarioAdmin, 64);
+    Validacion::limitarLargo(ui->lineContrasenaAdmin, 128);
+    Validacion::limitarLargo(ui->lineHostCentral, 253);
+    Validacion::limitarLargo(ui->lineUsuarioRegistro, 64);
+    Validacion::limitarLargo(ui->lineContrasenaRegistro, 128);
     ui->spinPuerto->setValue(DbConfig::kPort);
     ui->spinPuertoCentral->setValue(DbConfig::kPort);
     connect(ui->btnConfigurar, &QPushButton::clicked, this, &ConfigurarBdDialog::configurar);
@@ -56,8 +62,9 @@ static DbInicializador::Central centralDesdeFormulario(Ui::ConfigurarBdDialog *u
 }
 
 bool ConfigurarBdDialog::datosCentralValidos() {
-    if (ui->lineHostCentral->text().trimmed().isEmpty()) {
-        error("Indica la dirección del central.");
+    const QString errorHost = Validacion::direccionRed(ui->lineHostCentral->text());
+    if (!errorHost.isEmpty()) {
+        error(errorHost);
         return false;
     }
     if (ui->lineUsuarioRegistro->text().trimmed().isEmpty() || ui->lineContrasenaRegistro->text().isEmpty()) {

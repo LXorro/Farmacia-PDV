@@ -1,4 +1,5 @@
 #include "proveedordialog.h"
+#include "../util/validacion.h"
 #include "ui_proveedordialog.h"
 
 #include <QMessageBox>
@@ -7,6 +8,10 @@
 
 ProveedorDialog::ProveedorDialog(QWidget *parent) : QDialog(parent), ui(new Ui::ProveedorDialog) {
     ui->setupUi(this);
+    Validacion::filtrarTextoComercial(ui->lineNombreEmpresa, 100);
+    Validacion::filtrarTelefono(ui->lineTelefono);
+    Validacion::filtrarCorreo(ui->lineCorreo);
+    Validacion::filtrarDireccion(ui->lineDireccion);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &ProveedorDialog::guardar);
 }
 
@@ -37,8 +42,18 @@ void ProveedorDialog::cargarProveedor() {
 }
 
 void ProveedorDialog::guardar() {
-    if (ui->lineNombreEmpresa->text().trimmed().isEmpty()) {
-        QMessageBox::warning(this, "Validación", "El nombre de la empresa es obligatorio.");
+    using namespace Validacion;
+    if (rechazar(this, ui->lineNombreEmpresa, textoComercial(ui->lineNombreEmpresa->text(), "El nombre de la empresa", true, 100))
+        || rechazar(this, ui->lineTelefono, telefono(ui->lineTelefono->text()))
+        || rechazar(this, ui->lineCorreo, correo(ui->lineCorreo->text()))
+        || rechazar(this, ui->lineDireccion, direccion(ui->lineDireccion->text())))
+        return;
+    QSqlQuery repetido;
+    repetido.prepare("SELECT COUNT(*) FROM Proveedores WHERE nombre_empresa = :n AND id_proveedor <> :id");
+    repetido.bindValue(":n", normalizar(ui->lineNombreEmpresa->text()));
+    repetido.bindValue(":id", m_idProveedor);
+    if (repetido.exec() && repetido.next() && repetido.value(0).toInt() > 0) {
+        QMessageBox::warning(this, "Proveedor repetido", "Ya existe un proveedor con ese nombre.");
         return;
     }
 
@@ -52,10 +67,10 @@ void ProveedorDialog::guardar() {
         query.bindValue(":id", m_idProveedor);
     }
 
-    query.bindValue(":nombre", ui->lineNombreEmpresa->text().trimmed());
+    query.bindValue(":nombre", normalizar(ui->lineNombreEmpresa->text()));
     query.bindValue(":telefono", ui->lineTelefono->text().trimmed());
     query.bindValue(":correo", ui->lineCorreo->text().trimmed());
-    query.bindValue(":direccion", ui->lineDireccion->text().trimmed());
+    query.bindValue(":direccion", normalizar(ui->lineDireccion->text()));
     query.bindValue(":estado", ui->comboEstado->currentText());
 
     if (!query.exec()) {

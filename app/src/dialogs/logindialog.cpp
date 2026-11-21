@@ -1,4 +1,5 @@
 #include "logindialog.h"
+#include "../util/validacion.h"
 #include "ui_logindialog.h"
 #include "registrodialog.h"
 #include "../database/databasemanager.h"
@@ -14,6 +15,8 @@
 
 LoginDialog::LoginDialog(QWidget *parent) : QDialog(parent), ui(new Ui::LoginDialog) {
     ui->setupUi(this);
+    Validacion::limitarLargo(ui->lineUsuario, 50);
+    Validacion::limitarLargo(ui->lineContrasena, 128);
     connect(ui->btnIngresar, &QPushButton::clicked, this, &LoginDialog::ingresar);
     connect(ui->btnRegistrar, &QPushButton::clicked, this, &LoginDialog::abrirRegistro);
 

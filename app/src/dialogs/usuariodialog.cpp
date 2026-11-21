@@ -1,4 +1,5 @@
 #include "usuariodialog.h"
+#include "../util/validacion.h"
 #include "ui_usuariodialog.h"
 #include "../database/databasemanager.h"
 #include "../util/passwordutil.h"
@@ -9,6 +10,8 @@
 
 UsuarioDialog::UsuarioDialog(QWidget *parent) : QDialog(parent), ui(new Ui::UsuarioDialog) {
     ui->setupUi(this);
+    Validacion::filtrarNombreUsuario(ui->lineUsuario);
+    Validacion::limitarLargo(ui->lineContrasena, 64);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &UsuarioDialog::guardar);
     cargarCombos();
 }
@@ -65,15 +68,17 @@ void UsuarioDialog::guardar() {
         return;
     }
     QString usuario = ui->lineUsuario->text().trimmed();
-    if (usuario.isEmpty()) {
-        QMessageBox::warning(this, "Validación", "El nombre de usuario es obligatorio.");
+    if (Validacion::rechazar(this, ui->lineUsuario, Validacion::nombreUsuario(usuario)))
         return;
-    }
     QString contrasena = ui->lineContrasena->text();
     if (m_idUsuario < 0 && contrasena.isEmpty()) {
         QMessageBox::warning(this, "Validación", "La contraseña es obligatoria para un usuario nuevo.");
+        ui->lineContrasena->setFocus();
         return;
     }
+    // Al editar, vacío = no cambiar la contraseña; si se escribe una, cumple la política.
+    if (!contrasena.isEmpty() && Validacion::rechazar(this, ui->lineContrasena, Validacion::contrasena(contrasena)))
+        return;
 
     QSqlQuery query(DatabaseManager::instance().dbUsuarios());
     if (m_idUsuario < 0) {

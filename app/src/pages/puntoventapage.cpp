@@ -6,6 +6,7 @@
 #include "../database/sesionactual.h"
 #include "../util/iconos.h"
 #include "../util/tablas.h"
+#include "../util/validacion.h"
 
 #include <QHeaderView>
 #include <QMessageBox>
@@ -34,6 +35,7 @@ PuntoVentaPage::PuntoVentaPage(QWidget *parent) : QWidget(parent), ui(new Ui::Pu
     connect(ui->btnQuitarLinea, &QPushButton::clicked, this, &PuntoVentaPage::quitarLineaSeleccionada);
     connect(ui->btnCancelarVenta, &QPushButton::clicked, this, &PuntoVentaPage::cancelarVenta);
     connect(ui->btnCobrar, &QPushButton::clicked, this, &PuntoVentaPage::cobrar);
+    Validacion::limitarLargo(ui->lineBuscarProducto, 100);
 
     ui->btnAgregar->setIcon(Iconos::agregarAlCarrito());
     ui->btnQuitarLinea->setIcon(Iconos::quitarLinea());

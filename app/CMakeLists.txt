@@ -25,6 +25,8 @@ add_executable(FarmaciaApp
     src/database/sesionactual.cpp
     src/util/reportediario.h
     src/util/reportediario.cpp
+    src/util/validacion.h
+    src/util/validacion.cpp
     src/util/ticketimpreso.h
     src/util/ticketimpreso.cpp
     src/util/bitacora.h
