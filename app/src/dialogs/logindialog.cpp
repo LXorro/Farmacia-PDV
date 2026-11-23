@@ -6,6 +6,7 @@
 #include "../database/sesionactual.h"
 #include "../util/passwordutil.h"
 #include "../util/iconos.h"
+#include "../util/clavecentral.h"
 
 #include <QIcon>
 #include <QInputDialog>
@@ -112,16 +113,25 @@ void LoginDialog::ingresar() {
 // puede, deja elegir entre entrar en modo local (lo que el central ha replicado, sin editarlo) o cancelar.
 bool LoginDialog::conectarAdministradorAlCentral() {
     auto &gestor = DatabaseManager::instance();
-    bool aceptado = false;
-    const QString contrasena = QInputDialog::getText(
-        this, "Conexión con el central",
-        "Los administradores trabajan sobre el central. Escribe la contraseña de administración remota "
-        "(cuenta «farmacia_remoto»); no se guarda:", QLineEdit::Password, QString(), &aceptado);
-
     QString detalle;
-    if (aceptado && !contrasena.isEmpty()) {
+    QString contrasena = ClaveCentral::recordada();
+    if (!contrasena.isEmpty()) {
         if (gestor.conectarCentral(contrasena) && gestor.activarModoCentral())
             return true;
+        ClaveCentral::olvidar();   // la recordada ya no sirve
+        contrasena.clear();
+    }
+
+    bool recordarClave = false;
+    const bool aceptado = ClaveCentral::pedir(this, "Conexión con el central",
+        "Los administradores trabajan sobre el central. Escribe la contraseña de administración remota "
+        "(cuenta «farmacia_remoto»):", contrasena, recordarClave);
+    if (aceptado && !contrasena.isEmpty()) {
+        if (gestor.conectarCentral(contrasena) && gestor.activarModoCentral()) {
+            if (recordarClave)
+                ClaveCentral::recordar(contrasena);
+            return true;
+        }
         detalle = "\n\n" + gestor.lastError();
     }
     const auto respuesta = QMessageBox::question(

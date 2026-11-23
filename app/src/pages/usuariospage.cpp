@@ -2,6 +2,7 @@
 #include "ui_usuariospage.h"
 #include "../util/iconos.h"
 #include "../util/tablas.h"
+#include "../util/clavecentral.h"
 #include "../dialogs/usuariodialog.h"
 #include "../database/databasemanager.h"
 #include "../database/sesionactual.h"
@@ -50,12 +51,17 @@ bool UsuariosPage::asegurarConexion() {
     if (gestor.centralConectado())
         return true;
 
-    bool aceptado = false;
-    const QString contrasena = QInputDialog::getText(
-        this, "Conexión con el central",
-        "Las cuentas se administran en el central. Escribe la contraseña de administración remota "
-        "(cuenta «farmacia_remoto»):", QLineEdit::Password, QString(), &aceptado);
-    if (!aceptado)
+    QString contrasena = ClaveCentral::recordada();
+    bool recordarClave = false;
+    if (!contrasena.isEmpty()) {
+        if (gestor.conectarCentral(contrasena))
+            return true;
+        ClaveCentral::olvidar();   // la recordada ya no sirve
+        contrasena.clear();
+    }
+    if (!ClaveCentral::pedir(this, "Conexión con el central",
+            "Las cuentas se administran en el central. Escribe la contraseña de administración remota "
+            "(cuenta «farmacia_remoto»):", contrasena, recordarClave))
         return false;
 
     if (!gestor.conectarCentral(contrasena)) {
@@ -64,6 +70,8 @@ bool UsuariosPage::asegurarConexion() {
                              "modificarse sin conexión.\n\n" + gestor.lastError());
         return false;
     }
+    if (recordarClave)
+        ClaveCentral::recordar(contrasena);
     return true;
 }
 

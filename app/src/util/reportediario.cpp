@@ -149,7 +149,10 @@ QString generarHtml(const QDate &dia, int idSucursal, const QString &nombreSucur
     {
         QSqlQuery q = consulta(
             "SELECT TIME(d.fecha_devolucion), d.id_ticket, d.tipo_reembolso, d.modalidad_tarjeta, d.total_devuelto, d.estado, "
-            "d.referencia_reembolso, COALESCE(d.motivo, '') FROM Devoluciones d JOIN Tickets t ON t.id_ticket = d.id_ticket "
+            "d.referencia_reembolso, COALESCE(d.motivo, ''), "
+            "COALESCE((SELECT GROUP_CONCAT(CONCAT(dd.cantidad, ' × ', p.nombre) SEPARATOR ', ') FROM Detalle_Devolucion dd "
+            "JOIN Ventas v ON v.id_venta = dd.id_venta JOIN Lotes l ON l.id_lote = v.id_lote "
+            "JOIN Productos p ON p.id_producto = l.id_producto WHERE dd.id_devolucion = d.id_devolucion), '') FROM Devoluciones d JOIN Tickets t ON t.id_ticket = d.id_ticket "
             "WHERE DATE(d.fecha_devolucion) = :d" + filtroTicket + " ORDER BY d.fecha_devolucion", dia, idSucursal);
         QList<QStringList> filas;
         while (q.next()) {
@@ -157,11 +160,11 @@ QString generarHtml(const QDate &dia, int idSucursal, const QString &nombreSucur
             if (!q.value(3).isNull())
                 tipo += q.value(3).toString() == "cancelacion" ? " · cancel." : " · devol.";
             const QString estado = q.value(5).toString() == "solicitada" ? "pendiente" : q.value(5).toString();
-            filas.append({q.value(0).toTime().toString("HH:mm"), "#" + q.value(1).toString(), esc(tipo),
+            filas.append({q.value(0).toTime().toString("HH:mm"), "#" + q.value(1).toString(), esc(q.value(8).toString()), esc(tipo),
                           dinero(q.value(4).toDouble()), esc(estado), celda(q, 6), celda(q, 7)});
         }
         html += titulo("Devoluciones del día");
-        html += tabla({"Hora", "Ticket", "Reembolso", "Importe", "Estado", "Folio", "Motivo"}, filas, {3}, "Sin devoluciones.");
+        html += tabla({"Hora", "Ticket", "Producto(s)", "Reembolso", "Importe", "Estado", "Folio", "Motivo"}, filas, {4}, "Sin devoluciones.");
 
         q = consulta("SELECT COUNT(*), COALESCE(SUM(d.total_devuelto), 0) FROM Devoluciones d JOIN Tickets t ON t.id_ticket = d.id_ticket "
                      "WHERE d.tipo_reembolso = 'tarjeta' AND d.estado = 'solicitada'" + filtroTicket, dia, idSucursal);

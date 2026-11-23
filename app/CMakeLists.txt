@@ -34,6 +34,8 @@ add_executable(FarmaciaApp
     src/util/modeloutc.h
     src/util/passwordutil.h
     src/util/passwordutil.cpp
+    src/util/clavecentral.h
+    src/util/clavecentral.cpp
     src/util/iconos.h
     src/util/tablas.h
     src/util/tablas.cpp

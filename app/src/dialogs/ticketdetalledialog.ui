@@ -48,6 +48,7 @@
    <item>
     <widget class="QTableWidget" name="tableDevoluciones">
      <column><property name="text"><string>Fecha</string></property></column>
+     <column><property name="text"><string>Productos</string></property></column>
      <column><property name="text"><string>Importe</string></property></column>
      <column><property name="text"><string>Reembolso</string></property></column>
      <column><property name="text"><string>Estado</string></property></column>

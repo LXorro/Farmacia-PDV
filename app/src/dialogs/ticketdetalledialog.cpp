@@ -152,8 +152,13 @@ void TicketDetalleDialog::cargarDatos() {
     }
 
     QSqlQuery devoluciones;
-    devoluciones.prepare("SELECT fecha_devolucion, total_devuelto, tipo_reembolso, modalidad_tarjeta, estado, "
-                         "referencia_reembolso FROM Devoluciones WHERE id_ticket = :id ORDER BY fecha_devolucion");
+    devoluciones.prepare("SELECT d.fecha_devolucion, d.total_devuelto, d.tipo_reembolso, d.modalidad_tarjeta, d.estado, "
+                         "d.referencia_reembolso, "
+                         "(SELECT GROUP_CONCAT(CONCAT(dd.cantidad, ' × ', p.nombre) SEPARATOR ', ') "
+                         " FROM Detalle_Devolucion dd JOIN Ventas v ON v.id_venta = dd.id_venta "
+                         " JOIN Lotes l ON l.id_lote = v.id_lote JOIN Productos p ON p.id_producto = l.id_producto "
+                         " WHERE dd.id_devolucion = d.id_devolucion) AS productos "
+                         "FROM Devoluciones d WHERE d.id_ticket = :id ORDER BY d.fecha_devolucion");
     devoluciones.bindValue(":id", m_idTicket);
     devoluciones.exec();
     ui->tableDevoluciones->setRowCount(0);
@@ -162,14 +167,15 @@ void TicketDetalleDialog::cargarDatos() {
     while (devoluciones.next()) {
         ui->tableDevoluciones->insertRow(fila);
         ui->tableDevoluciones->setItem(fila, 0, new QTableWidgetItem(devoluciones.value(0).toDateTime().toString("dd/MM/yyyy HH:mm")));
-        ui->tableDevoluciones->setItem(fila, 1, new QTableWidgetItem(QString::number(devoluciones.value(1).toDouble(), 'f', 2)));
+        ui->tableDevoluciones->setItem(fila, 1, new QTableWidgetItem(devoluciones.value(6).toString()));
+        ui->tableDevoluciones->setItem(fila, 2, new QTableWidgetItem(QString::number(devoluciones.value(1).toDouble(), 'f', 2)));
         QString reembolso = devoluciones.value(2).toString();
         if (!devoluciones.value(3).isNull())
             reembolso += " (" + devoluciones.value(3).toString() + ")";
-        ui->tableDevoluciones->setItem(fila, 2, new QTableWidgetItem(reembolso));
+        ui->tableDevoluciones->setItem(fila, 3, new QTableWidgetItem(reembolso));
         const QString estado = devoluciones.value(4).toString();
-        ui->tableDevoluciones->setItem(fila, 3, new QTableWidgetItem(estado == "solicitada" ? "pendiente en terminal" : estado));
-        ui->tableDevoluciones->setItem(fila, 4, new QTableWidgetItem(devoluciones.value(5).toString()));
+        ui->tableDevoluciones->setItem(fila, 4, new QTableWidgetItem(estado == "solicitada" ? "pendiente en terminal" : estado));
+        ui->tableDevoluciones->setItem(fila, 5, new QTableWidgetItem(devoluciones.value(5).toString()));
         if (estado == "solicitada" && devoluciones.value(2).toString() == "tarjeta")
             ++pendientes;
         ++fila;
