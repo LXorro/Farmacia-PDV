@@ -8,6 +8,7 @@
 #include "../util/tablas.h"
 #include "../util/validacion.h"
 
+#include <QHash>
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QSqlDatabase>
@@ -147,20 +148,47 @@ void PuntoVentaPage::agregarAlCarrito() {
     lote.prepare("SELECT id_lote, numero_lote, cantidad_disponible FROM Lotes "
                  "WHERE id_producto = :pid AND id_sucursal = :suc AND cantidad_disponible > 0 "
                  "AND (fecha_caducidad IS NULL OR fecha_caducidad >= CURDATE()) "
-                 "ORDER BY fecha_caducidad ASC LIMIT 1");
+                 "ORDER BY fecha_caducidad ASC");
     lote.bindValue(":pid", idProducto);
     lote.bindValue(":suc", idSucursal);
-    if (!lote.exec() || !lote.next()) {
+    if (!lote.exec()) {
         QMessageBox::warning(this, "Sin existencias", nombreProducto + " no tiene lotes disponibles en esta sucursal.");
         return;
     }
 
-    int idLote = lote.value(0).toInt();
-    QString numeroLote = lote.value(1).toString();
-    int disponible = lote.value(2).toInt();
-    if (disponible < cantidad) {
+    // Lo que ya está en el carrito también cuenta: el stock libre de un lote es lo disponible menos lo apartado.
+    // Se usa el primer lote (el que caduca antes) donde quepa la cantidad pedida.
+    const auto apartadoEnCarrito = [this](int idLote) {
+        int apartado = 0;
+        for (const LineaCarrito &existente : m_carrito)
+            if (existente.idLote == idLote)
+                apartado += existente.cantidad;
+        return apartado;
+    };
+    int idLote = -1;
+    QString numeroLote;
+    int libreMaximo = 0;
+    bool habiaLotes = false;
+    while (lote.next()) {
+        habiaLotes = true;
+        const int id = lote.value(0).toInt();
+        const int libre = lote.value(2).toInt() - apartadoEnCarrito(id);
+        libreMaximo = qMax(libreMaximo, libre);
+        if (idLote < 0 && libre >= cantidad) {
+            idLote = id;
+            numeroLote = lote.value(1).toString();
+        }
+    }
+    if (!habiaLotes) {
+        QMessageBox::warning(this, "Sin existencias", nombreProducto + " no tiene lotes disponibles en esta sucursal.");
+        return;
+    }
+    if (idLote < 0) {
         QMessageBox::warning(this, "Stock insuficiente",
-                              QString("Solo hay %1 unidades disponibles en el lote %2.").arg(disponible).arg(numeroLote));
+                              libreMaximo > 0
+                                  ? QString("Solo hay %1 unidades disponibles de %2 (contando lo que ya está en el carrito).")
+                                        .arg(libreMaximo).arg(nombreProducto)
+                                  : QString("No quedan unidades de %1 sin apartar: ya están todas en el carrito.").arg(nombreProducto));
         return;
     }
 
@@ -277,11 +305,15 @@ void PuntoVentaPage::cobrar() {
     // condición de carrera de dos ventas simultáneas sobre el mismo lote.
     // El caso equivalente entre sucursales (stock centralizado) se resuelve
     // en el plan con una transacción distribuida (XA) — ver Plan_Proyecto.md.
+    // Se agrupa por lote: varias líneas del mismo lote deben caber juntas, no una por una.
+    QHash<int, int> pedidoPorLote;
+    for (const LineaCarrito &linea : m_carrito)
+        pedidoPorLote[linea.idLote] += linea.cantidad;
     for (const LineaCarrito &linea : m_carrito) {
         QSqlQuery verificar;
         verificar.prepare("SELECT cantidad_disponible FROM Lotes WHERE id_lote = :id FOR UPDATE");
         verificar.bindValue(":id", linea.idLote);
-        if (!verificar.exec() || !verificar.next() || verificar.value(0).toInt() < linea.cantidad) {
+        if (!verificar.exec() || !verificar.next() || verificar.value(0).toInt() < pedidoPorLote.value(linea.idLote)) {
             db.rollback();
             QMessageBox::warning(this, "Stock insuficiente",
                                   linea.nombreProducto + " ya no tiene existencias suficientes en el lote " + linea.numeroLote + ".");

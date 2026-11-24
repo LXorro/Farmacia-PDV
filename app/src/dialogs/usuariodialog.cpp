@@ -2,6 +2,7 @@
 #include "../util/validacion.h"
 #include "ui_usuariodialog.h"
 #include "../database/databasemanager.h"
+#include "../database/sesionactual.h"
 #include "../util/passwordutil.h"
 
 #include <QMessageBox>
@@ -79,6 +80,33 @@ void UsuarioDialog::guardar() {
     // Al editar, vacío = no cambiar la contraseña; si se escribe una, cumple la política.
     if (!contrasena.isEmpty() && Validacion::rechazar(this, ui->lineContrasena, Validacion::contrasena(contrasena)))
         return;
+
+    // Nunca debe quedar el sistema sin un administrador activo (nadie podría volver a administrarlo).
+    if (m_idUsuario >= 0) {
+        const bool quedaAdminActivo = ui->comboRol->currentText() == "admin" && ui->comboEstado->currentText() == "activo";
+        QSqlQuery actual(DatabaseManager::instance().dbUsuarios());
+        actual.prepare("SELECT rol, estado FROM Usuarios WHERE id_usuario = :id");
+        actual.bindValue(":id", m_idUsuario);
+        const bool eraAdminActivo = actual.exec() && actual.next()
+                                    && actual.value(0).toString() == "admin" && actual.value(1).toString() == "activo";
+        if (eraAdminActivo && !quedaAdminActivo) {
+            if (m_idUsuario == SesionActual::instance().idUsuario()) {
+                QMessageBox::warning(this, "Cuenta en uso",
+                                     "No puedes quitarte el rol de administrador ni desactivar tu propia cuenta "
+                                     "mientras tienes la sesión abierta.");
+                return;
+            }
+            QSqlQuery otros(DatabaseManager::instance().dbUsuarios());
+            otros.prepare("SELECT COUNT(*) FROM Usuarios WHERE rol = 'admin' AND estado = 'activo' AND id_usuario <> :id");
+            otros.bindValue(":id", m_idUsuario);
+            if (!otros.exec() || !otros.next() || otros.value(0).toInt() < 1) {
+                QMessageBox::warning(this, "Último administrador",
+                                     "Esta es la única cuenta de administrador activa. Crea o activa otra antes de "
+                                     "desactivarla o cambiarle el rol.");
+                return;
+            }
+        }
+    }
 
     QSqlQuery query(DatabaseManager::instance().dbUsuarios());
     if (m_idUsuario < 0) {
